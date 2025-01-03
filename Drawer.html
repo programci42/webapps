@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            height: 100vh;
+        }
+        .panel {
+            width: 250px;
+            padding: 10px;
+            background-color: #f4f4f4;
+            border-right: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+        .groupbox {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+        .groupbox h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        .radio-buttons table, .color-squares table {
+            width: 100%;
+        }
+        .radio-buttons td, .color-squares td {
+            text-align: center;
+        }
+        .color-squares div {
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            display: inline-block;
+            position: relative;
+        }
+        .color-squares div::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            background-color: #000;
+            color: #fff;
+            padding: 3px;
+            border-radius: 3px;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        .color-squares div:hover::after {
+            opacity: 1;
+        }
+        .red { background-color: red; }
+        .blue { background-color: blue; }
+        .green { background-color: green; }
+        .black { background-color: black; }
+        .white { background-color: white; border: 1px solid #ddd; }
+        .purple { background-color: purple; }
+        .orange { background-color: orange; }
+        .beige { background-color: beige; }
+        .brown { background-color: brown; }
+        .gray { background-color: gray; }
+        .maroon { background-color: maroon; }
+        .turquoise { background-color: turquoise; }
+        .ottoman-red { background-color: #A32638; }
+        .yellow { background-color: yellow; }
+        .pink { background-color: pink; }
+        .canvas-container {
+            flex: 1;
+            position: relative;
+        }
+        canvas {
+            border: 1px solid #ddd;
+            cursor: crosshair;
+        }
+        .button-container {
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            flex: 1;
+            padding: 10px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="panel">
+		<div class="groupbox" style="text-align:center;">
+			<h3 style="color:blue;">DRAW A PICTURE</h3>
+		</div>
+		
+        <div class="groupbox">
+            <h3>SIZE</h3>
+            <div class="radio-buttons">
+                <table>
+                    <tr>
+                        <td><label><input type="radio" name="fontSize" onclick="changeBrushSize(8)"> 8px</label></td>
+                        <td><label><input type="radio" name="fontSize" onclick="changeBrushSize(10)"> 10px</label></td>
+                        <td><label><input type="radio" name="fontSize" onclick="changeBrushSize(12)"> 12px</label></td>
+                    </tr>
+                    <tr>
+                        <td><label><input type="radio" name="fontSize" onclick="changeBrushSize(16)"> 16px</label></td>
+                        <td><label><input type="radio" name="fontSize" onclick="changeBrushSize(20)"> 20px</label></td>
+                        <td><label><input type="radio" name="fontSize" onclick="changeBrushSize(24)"> 24px</label></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div class="groupbox">
+            <h3>COLORS</h3>
+            <div class="color-squares">
+                <table>
+                    <tr>
+                        <td><div class="red" data-tooltip="Kırmızı" onclick="changeColor('red')"></div></td>
+                        <td><div class="blue" data-tooltip="Mavi" onclick="changeColor('blue')"></div></td>
+                        <td><div class="green" data-tooltip="Yeşil" onclick="changeColor('green')"></div></td>
+                    </tr>
+                    <tr>
+                        <td><div class="black" data-tooltip="Siyah" onclick="changeColor('black')"></div></td>
+                        <td><div class="white" data-tooltip="Beyaz" onclick="changeColor('white')"></div></td>
+                        <td><div class="purple" data-tooltip="Mor" onclick="changeColor('purple')"></div></td>
+                    </tr>
+                    <tr>
+                        <td><div class="orange" data-tooltip="Turuncu" onclick="changeColor('orange')"></div></td>
+                        <td><div class="beige" data-tooltip="Hasır Rengi" onclick="changeColor('beige')"></div></td>
+                        <td><div class="brown" data-tooltip="Kahverengi" onclick="changeColor('brown')"></div></td>
+                    </tr>
+                    <tr>
+                        <td><div class="gray" data-tooltip="Metalik Gri" onclick="changeColor('gray')"></div></td>
+                        <td><div class="maroon" data-tooltip="Maroon" onclick="changeColor('maroon')"></div></td>
+                        <td><div class="turquoise" data-tooltip="Türk Mavisi" onclick="changeColor('turquoise')"></div></td>
+                    </tr>
+                    <tr>
+                        <td><div class="ottoman-red" data-tooltip="Osmanlı Kırmızısı" onclick="changeColor('#A32638')"></div></td>
+                        <td><div class="yellow" data-tooltip="Sarı" onclick="changeColor('yellow')"></div></td>
+                        <td><div class="pink" data-tooltip="Pembe" onclick="changeColor('pink')"></div></td>
+                    </tr>
+                </table>
+            </div>
+            <div class="button-container">
+                <button onclick="clearCanvas()">CLEAR</button>
+                <button onclick="saveCanvas()">SAVE</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="canvas-container">
+        <canvas id="canvas"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth - 250;
+        canvas.height = window.innerHeight;
+
+        let drawing = false;
+        let brushSize = 8;
+        let color = 'red';
+        let posX = canvas.width / 2;
+        let posY = canvas.height / 2;
+        let enterPressed = false;
+
+        function changeBrushSize(size) {
+            brushSize = size;
+        }
+
+        function changeColor(selectedColor) {
+            color = selectedColor;
+        }
+
+        function drawDot(x, y) {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(x, y, brushSize / 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function saveCanvas() {
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL('image/png');
+            link.download = 'çizim.png';
+            link.click();
+        }
+
+        function handleDrawing() {
+            if (drawing || enterPressed) {
+                drawDot(posX, posY);
+            }
+        }
+
+        function updateCursorPosition(e) {
+            const rect = canvas.getBoundingClientRect();
+            posX = e.clientX - rect.left;
+            posY = e.clientY - rect.top;
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            drawing = true;
+            updateCursorPosition(e);
+            handleDrawing();
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (drawing || enterPressed) {
+                updateCursorPosition(e);
+                handleDrawing();
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => drawing = false);
+        canvas.addEventListener('mouseout', () => drawing = false);
+
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowUp':
+                    posY = Math.max(posY - 10, 0);
+                    break;
+                case 'ArrowDown':
+                    posY = Math.min(posY + 10, canvas.height);
+                    break;
+                case 'ArrowLeft':
+                    posX = Math.max(posX - 10, 0);
+                    break;
+                case 'ArrowRight':
+                    posX = Math.min(posX + 10, canvas.width);
+                    break;
+                case 'Enter':
+                    enterPressed = true;
+                    handleDrawing();
+                    break;
+            }
+            // Update cursor position with new coordinates
+            const event = new MouseEvent('mousemove', {
+                clientX: posX + canvas.getBoundingClientRect().left,
+                clientY: posY + canvas.getBoundingClientRect().top
+            });
+            canvas.dispatchEvent(event);
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') {
+                enterPressed = false;
+            }
+        });
+
+    </script>
+
+</body>
+</html>

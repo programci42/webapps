@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OPEN URL</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+        .search-container {
+            text-align: center;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 95%;
+			height:200px;
+        }
+        .search-container h1 {
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+        .search-container input[type="text"] {
+            width: 82%;
+            padding: 10px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            margin-right: 10px;
+			border-color:black;
+        }
+        
+		
+		.search-container a {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+			text-decoration:none;
+        }
+        .search-container a:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body onload="url.focus();">
+
+    <div class="search-container">
+        <h1>SIMPLE URL NAVIGATOR</h1>
+        <form id="frm" name="frm" action="javascript:void(0);" onsubmit="openURL()">
+            <input type="text" id="url" style="float:left; background-color:ivory;" placeholder="Bir URL girin" required>
+            <a href="#" onclick="javascript:frm.submit();" style="margin-left:10px;">GO</a>
+			<a href="#" onclick="javascript:window.history.back();" style="margin-left:10px;">BACK</a>
+        </form>
+		<div style="position:relative;top:50px; width:80%;">
+		 <a href="http://www.google.com/">GOOGLE</a>&nbsp;&nbsp;
+		 <a href="http://www.yandex.com/">YANDEX</a>&nbsp;&nbsp;
+		 <a href="http://www.youtube.com/">YOUTUBE</a>&nbsp;&nbsp;
+		 <a href="https://store.steampowered.com/">STEAM</a>&nbsp;&nbsp;
+		 <a href="https://store.playstation.com/">PSN</a>&nbsp;&nbsp;
+		 <a href="https://www.xbox.com/">XBOX</a>&nbsp;&nbsp;
+		 <a href="https://www.nintendo.com/">NINTENDO</a>&nbsp;&nbsp;
+		 <a href="https://store.steampowered.com/curator/35460052/">MY STEAM GAMES</a>&nbsp;&nbsp;
+		</div>	
+    </div>
+
+    <script type="text/javascript">
+        function openURL() {
+            var url = document.getElementById("url").value;
+            if (url) {
+                // URL'yi kontrol et ve 'http://' ekle, eğer eklenmemişse
+                if (!url.startsWith("http://") && !url.startsWith("https://")) {
+                    url = "http://" + url;
+                }
+                window.location.href = url;
+            }
+        }
+    </script>
+
+</body>
+</html>
