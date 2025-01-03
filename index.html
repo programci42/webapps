@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ismail ozel web apps</title>
+    <style>
+        body {
+            font-family: 'MS Reference Sans Serif';
+            display: flex;
+            margin: 0;
+            padding: 0;
+        }
+        .sidebar {
+            width: 200px;
+            background-color: #d5f3e5;
+            padding: 20px;
+			height:93vh;
+        }
+        .sidebar h2 {
+            color: #444;
+        }
+        .sidebar a {
+            display: block;
+            color: #1e90ff;
+            text-decoration: none;
+            margin: 10px 0;
+            padding: 5px 0;
+			background-color:gainsboro;
+			font-size:12pt;
+			font-weight:bold;
+        }
+        .sidebar a:hover {
+            background-color: #f0f0f0;
+            padding-left: 5px;
+        }
+        .main-content {
+            flex-grow: 1;
+            background-color: #b0c4de;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #add8e6;
+            padding: 10px;
+        }
+        .header h1 {
+            color: red;
+            margin: 0;
+        }
+        .content {
+            display: none;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .content.active {
+            display: block;
+        }
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .product-card {
+            background-color: #f0f0f0;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+			cursor:pointer;
+        }
+        .product-card h3 {
+            color: blue;
+			
+        }
+        .product-card p {
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div>
+            <h2>MENU</h2>
+            <a href="javascript:void(0);" onclick="showContent('games');">Games</a>
+            <a href="javascript:void(0);" onclick="showContent('apps');">Apps</a>
+            <a href="javascript:void(0);" onclick="showContent('about');">About Us</a>
+			<a href="https://store.steampowered.com/curator/35460052">My Steam Page</a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <center><h1>İSMAİL ÖZEL WEB APPS</h1></center>
+        </div>
+
+        <div id="games" class="content">
+            <center><h2 style="color:blue;">GAMES</h2></center>
+            <div class="product-grid">
+                <div class="product-card" onclick="javascript:window.location.href = 'https://htmlpreview.github.io/?https://github.com/programci42/webapps/blob/main/Box_Crusher.html';">
+                    <h3>BOX CRUSHER</h3>
+                </div>
+                <div class="product-card" onclick="javascript:window.location.href='https://htmlpreview.github.io/?https://github.com/programci42/webapps/blob/main/WAR_1943.html';">
+                    <h3>WAR 1943</h3>
+                </div>
+                <div class="product-card" onclick="javascript:window.location.href='https://htmlpreview.github.io/?https://github.com/programci42/webapps/blob/main/WHEEL_LANDING.html';">
+                    <h3>WHEEL LANDING</h3>
+                </div>
+                <div class="product-card" onclick="javascript:https://htmlpreview.github.io/?https://github.com/programci42/webapps/blob/main/SU_KODU.html">
+                    <h3>SU KODU</h3>
+                </div>
+                <div class="product-card" onclick="javascript:window.location.href = 'https://store.steampowered.com/app/2839550/Everything_All_in_1';">
+                    <h3>MORE BROWSER GAMES</h3>
+                </div>
+                <div class="product-card" onclick="javascript:window.location.href='https://store.steampowered.com/curator/35460052';">
+                    <h3>STEAM GAMES</h3>
+                </div>
+            </div>
+        </div>
+
+        <div id="apps" class="content">
+            <center><h2 style="color:blue;">APPLICATIONS</h2></center>
+            <div class="product-grid" >
+                <div class="product-card" onclick="javascript:window.location.href = 'https://htmlpreview.github.io/?https://github.com/programci42/webapps/blob/main/Drawer.html';">
+                    <h3>DRAWER</h3>
+                </div>
+                
+				<div class="product-card" onclick="javascript:window.location.href = 'https://htmlpreview.github.io/?https://github.com/programci42/webapps/blob/main/Calc.html';">
+                    <h3>CALC</h3>
+                </div>
+                
+				<div class="product-card" onclick="javascript:window.location.href = 'https://htmlpreview.github.io/?https://github.com/programci42/webapps/blob/main/url.html';">
+                    <h3>SIMPLE URL NAVIGATOR</h3>
+                </div>
+                
+            </div>
+        </div>
+
+        <div id="about" class="content">
+            <center><h2 style="color:blue;">ABOUT US</h2></center>
+            <p>This project aims to share free browser-based games and applications that are easily accessible from all devices.</p>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        function showContent(contentId) {
+            var contents = document.querySelectorAll('.content');
+            contents.forEach(function(content) {
+                content.classList.remove('active');
+            });
+            document.getElementById(contentId).classList.add('active');
+        }
+    </script>
+
+</body>
+</html>
