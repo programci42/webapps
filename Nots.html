@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Not Defteri</title>
+    <style type="text/css">
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .menu-bar {
+            background-color: #ddd;
+            overflow: hidden;
+			text-align:center;
+        }
+        .menu-bar .menu {
+            float: left;
+            overflow: hidden;
+        }
+        .menu .menu-btn {
+            font-size: 16px;
+            border: none;
+            outline: none;
+            color: black;
+            padding: 14px 16px;
+            background-color: inherit;
+            cursor: pointer;
+        }
+        .menu:hover .menu-btn {
+            background-color: #bbb;
+        }
+        .menu-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            z-index: 1;
+        }
+        .menu-content div {
+            padding: 12px 16px;
+            cursor: pointer;
+        }
+        .menu-content div:hover {
+            background-color: #ddd;
+        }
+        .menu:hover .menu-content {
+            display: block;
+        }
+        
+		#editor 
+		{
+            width: 98%;
+            height: 80vh;
+            margin: 10px;
+			background-color:ivory;
+        }
+		
+        #notlar-panel {
+            display: none;
+            position: fixed;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -20%);
+            width: 400px;
+            height: 300px;
+            background-color: azure;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            z-index: 1;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        #notlar-listesi div {
+            padding: 10px;
+			margin: 5px;
+            border-bottom: 1px solid #ddd;
+        }
+        #notlar-listesi div:hover {
+            background-color: #f1f1f1;
+            cursor: pointer;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+	
+</head>
+<body>
+    <div class="menu-bar">
+        <div class="menu">
+            <button class="menu-btn">FILE</button>
+            <div class="menu-content">
+                <div onclick="kaydetNot();">Save</div>
+                <div onclick="indirNot();">Download</div>
+            </div>
+        </div>
+        <div class="menu">
+            <button class="menu-btn">EDIT</button>
+            <div class="menu-content">
+                <div onclick="duzenMenu(1)">Copy</div>
+                <div onclick="duzenMenu(2)">Paste</div>
+                <div onclick="duzenMenu(3)">Undo</div>
+            </div>
+        </div>
+        <div class="menu">
+            <button class="menu-btn">VIEW</button>
+            <div class="menu-content">
+                <div onclick="gorunumMenu(1)">Font Size</div>
+                <div onclick="gorunumMenu(2)">Text Color</div>
+            </div>
+        </div>
+        <div class="menu">
+            <button class="menu-btn">NOTES</button>
+            <div class="menu-content">
+                <div onclick="notlarMenu()">Notes List</div>
+            </div>
+        </div>
+    </div>
+
+    <textarea id="editor"></textarea>
+
+    <div id="notlar-panel">
+        <h2>NOTLAR</h2>
+        <div id="notlar-listesi"></div>
+        <button onclick="paneliKapat();">Cancel</button>
+        <button onclick="paneliTamamla();">Ok</button>
+		<button onclick="silNot();" style="background-color:Maroon;">Delete</button>
+    </div>
+
+    <script type="text/javascript">
+		var notcuk = "";
+		var seciliNotIndex = -1;
+        function kaydetNot() {
+            let notIcerik = document.getElementById('editor').value;
+            if (notIcerik.trim() === '') return alert('Note is not null!');
+
+            let notlar = JSON.parse(localStorage.getItem('notlar')) || [];
+            let yeniNot = {
+                icerik: notIcerik,
+                tarih: new Date().toLocaleString()
+            };
+            notlar.push(yeniNot);
+            localStorage.setItem('notlar', JSON.stringify(notlar));
+            alert('Note is saved!');
+        }
+		
+		function gorunumMenu(secim) {
+            let editor = document.getElementById('editor');
+
+            if (secim === 1) {
+                let boyut = prompt('Yeni yazı boyutu (örn: 16px):');
+                editor.style.fontSize = boyut;
+            } else if (secim === 2) {
+                let renk = prompt('Yeni yazı rengi (örn: red):');
+                editor.style.color = renk;
+            }
+        }
+		
+		function silNot() {
+            if (seciliNotIndex === -1) return alert('Please select a note!');
+            let notlar = JSON.parse(localStorage.getItem('notlar')) || [];
+            notlar.splice(seciliNotIndex, 1);
+            localStorage.setItem('notlar', JSON.stringify(notlar));
+            notlariListele();
+        }
+		
+		 function duzenMenu(secim) {
+            let editor = document.getElementById('editor');
+
+            if (secim === 1) {
+                navigator.clipboard.writeText(editor.value);
+            } else if (secim === 2) {
+                navigator.clipboard.readText().then(text => editor.value += text);
+            } else if (secim === 3) {
+                document.execCommand('undo');
+            }
+        }
+
+        function indirNot() {
+            let notIcerik = document.getElementById('editor').value;
+            if (notIcerik.trim() === '') return alert('Note is not null!');
+            let blob = new Blob([notIcerik], { type: 'text/plain' });
+            let link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'not.txt';
+            link.click();
+        }
+
+		function notsec(id)
+		{
+			for (let x = 0; x<5000; x++)
+					{
+						if (document.getElementById("not" + x.toString()) !== undefined && document.getElementById("not" + x.toString()) !== null)
+						{
+							document.getElementById("not" + x.toString()).style.backgroundColor = "";
+							document.getElementById("not" + x.toString()).style.color = "";
+						}
+					}
+                   document.getElementById(id).style.backgroundColor = "green";
+				   document.getElementById(id).style.color = "white";
+		}
+
+        function notlariListele() {
+            let notlarListesi = document.getElementById('notlar-listesi');
+            notlarListesi.innerHTML = '';
+            let notlar = JSON.parse(localStorage.getItem('notlar')) || [];
+			let i = 0;
+            notlar.forEach((not, index) => {
+                let div = document.createElement('div');
+				div.id = "not" + i.toString();
+                div.innerHTML = `${index + 1}. ${not.tarih}`;
+                div.onclick = () => {
+					notcuk = not.icerik;
+					seciliNotIndex = index;
+					notsec(div.id);
+                };
+                notlarListesi.appendChild(div);
+				i++;
+            });
+        }
+
+        function notlarMenu() {
+            notlariListele();
+            document.getElementById('notlar-panel').style.display = 'block';
+        }
+
+        function paneliKapat() {
+            document.getElementById('notlar-panel').style.display = 'none';
+        }
+
+        function paneliTamamla() 
+		{
+			editor.value = notcuk;
+            paneliKapat();
+        }
+    </script>
+</body>
+</html>
