@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oyun Kayıt Uygulaması</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+        input, select {
+            width: 97%;
+            padding: 10px;
+            margin: 5px 0 15px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        
+		button 
+		{
+			min-width: 100px;
+			padding: 10px;
+			border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+			margin: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+			border-color:black;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 12px;
+            text-align: center;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2ff;
+        }
+        tr:hover {
+            background-color: #ddd;
+        }
+        .form-buttons {
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+	
+	<script type="text/javascript">
+	function indirCSV() {
+    const table = document.getElementById('oyunTablosu');
+    const rows = table.getElementsByTagName('tr');
+    let csvContent = "GAME;PLATFORM;STATUS;POINT\n"; // Başlık satırı
+
+    // Tabloyu döngü ile işle
+    for (let i = 1; i < rows.length; i++) { // Başlık satırını atla
+        const cols = rows[i].getElementsByTagName('td');
+        const rowArray = [];
+        
+        // Her sütunu al ve virgülle ayır
+        for (let j = 0; j < cols.length - 1; j++) { // Son sütun (İşlemler) hariç
+            rowArray.push(cols[j].innerText);
+        }
+        
+        // Satırı CSV formatında ekle
+        csvContent += rowArray.join(";") + "\n";
+    }
+
+    // CSV dosyasını indir
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.download !== undefined) { // Eğer tarayıcı destekliyorsa
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', 'oyun_kayitlari.csv');
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+}
+
+	</script>
+</head>
+<body>
+
+<div class="container">
+    <h1>GAME INFO SAVE</h1>
+
+    <div>
+        <label for="oyunAdi">GAME NAME:</label>
+        <input type="text" id="oyunAdi" placeholder="Oyun adı girin">
+        
+        <label for="platform">PLATFORM:</label>
+        <select id="platform">
+            <option value="PC">PC</option>
+            <option value="PS5">PS5</option>
+            <option value="Xbox 360">Xbox 360</option>
+            <option value="Xbox One S">Xbox One S</option>
+            <option value="PS2">PS2</option>
+        </select>
+
+        <label for="durum">STATUS:</label>
+        <select id="durum">
+            <option value="Play">Play</option>
+            <option value="Finish">Finish</option>
+            <option value="Cancel">Cancel</option>
+            <option value="Will Play">Will Play</option>
+        </select>
+
+        <label for="puan">POINT:</label>
+        <input type="number" id="puan" min="0" max="10" placeholder="Enter a point">
+        
+        <div class="form-buttons">
+            <button onclick="kaydet()">SAVE</button>
+			<button onclick="indirCSV();">DOWNLOAD</button>
+            <button onclick="guncelle()" style="background-color:yellowgreen;">UPDATE</button>
+            <button onclick="arama()" style="background-color:blue;">SEARCH</button>
+            <button onclick="yeniKayit()">NEW</button>
+        </div>
+    </div>
+
+    <table id="oyunTablosu">
+        <thead>
+            <tr>
+                <th>GAME NAME</th>
+                <th>PLATFORM</th>
+                <th>STATUS</th>
+                <th>POINT</th>
+                <th>PROCESS</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Kayıtlar buraya eklenecek -->
+        </tbody>
+    </table>
+</div>
+
+<script>
+    // Kayıtları çerezlere kaydet ve al
+    function kaydet() {
+        const oyunAdi = document.getElementById('oyunAdi').value;
+        const platform = document.getElementById('platform').value;
+        const durum = document.getElementById('durum').value;
+        const puan = document.getElementById('puan').value;
+
+        if (!oyunAdi || !puan) {
+            alert('Oyun adı ve puan girilmesi zorunludur.');
+            return;
+        }
+
+        let oyunlar = JSON.parse(localStorage.getItem('oyunlar')) || [];
+        oyunlar.push({ oyunAdi, platform, durum, puan });
+        localStorage.setItem('oyunlar', JSON.stringify(oyunlar));
+        yeniKayit();
+    }
+
+    // Kayıtları tabloya ekle
+    function yeniKayit() {
+        const oyunlar = JSON.parse(localStorage.getItem('oyunlar')) || [];
+        const tbody = document.getElementById('oyunTablosu').getElementsByTagName('tbody')[0];
+        tbody.innerHTML = '';
+
+        oyunlar.forEach((oyun, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${oyun.oyunAdi}</td>
+                <td>${oyun.platform}</td>
+                <td>${oyun.durum}</td>
+                <td>${oyun.puan}</td>
+                <td>
+                    <button onclick="duzenle(${index})"  style="background-color:yellowgreen;">UPDATE</button>
+                    <button onclick="silOyun(${index})" style="background-color:maroon;">DELETE</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Silme işlemi
+    function sil() {
+        document.getElementById('oyunAdi').value = '';
+        document.getElementById('platform').value = 'PC';
+        document.getElementById('durum').value = 'Oynuyor';
+        document.getElementById('puan').value = '';
+    }
+
+    // Güncelleme işlemi
+    function guncelle() {
+        const oyunAdi = document.getElementById('oyunAdi').value;
+        const platform = document.getElementById('platform').value;
+        const durum = document.getElementById('durum').value;
+        const puan = document.getElementById('puan').value;
+
+        if (!oyunAdi || !puan) {
+            alert('Oyun adı ve puan girilmesi zorunludur.');
+            return;
+        }
+
+        let oyunlar = JSON.parse(localStorage.getItem('oyunlar')) || [];
+        const index = oyunlar.findIndex(oyun => oyun.oyunAdi === oyunAdi);
+        if (index !== -1) {
+            oyunlar[index] = { oyunAdi, platform, durum, puan };
+            localStorage.setItem('oyunlar', JSON.stringify(oyunlar));
+            yeniKayit();
+        } else {
+            alert('Oyun bulunamadı.');
+        }
+    }
+
+    // Arama işlemi
+    function arama() {
+        const oyunAdi = prompt('Aramak istediğiniz oyun adını girin:');
+        const oyunlar = JSON.parse(localStorage.getItem('oyunlar')) || [];
+        const aramaSonucu = oyunlar.filter(oyun => oyun.oyunAdi.toLowerCase().includes(oyunAdi.toLowerCase()));
+        
+        if (aramaSonucu.length > 0) {
+            alert('Arama sonucları bulundu.');
+            const tbody = document.getElementById('oyunTablosu').getElementsByTagName('tbody')[0];
+            tbody.innerHTML = '';
+            aramaSonucu.forEach(oyun => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${oyun.oyunAdi}</td>
+                    <td>${oyun.platform}</td>
+                    <td>${oyun.durum}</td>
+                    <td>${oyun.puan}</td>
+                    <td>
+                        <button onclick="duzenle(${oyun})">Düzenle</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } else {
+            alert('Oyun bulunamadı.');
+        }
+    }
+
+    // Silme işlemi
+    function silOyun(index) {
+        let oyunlar = JSON.parse(localStorage.getItem('oyunlar')) || [];
+        oyunlar.splice(index, 1);
+        localStorage.setItem('oyunlar', JSON.stringify(oyunlar));
+        yeniKayit();
+    }
+
+    // Düzenleme işlemi
+    function duzenle(index) {
+        const oyunlar = JSON.parse(localStorage.getItem('oyunlar')) || [];
+        const oyun = oyunlar[index];
+        document.getElementById('oyunAdi').value = oyun.oyunAdi;
+        document.getElementById('platform').value = oyun.platform;
+        document.getElementById('durum').value = oyun.durum;
+        document.getElementById('puan').value = oyun.puan;
+    }
+
+    // Sayfa yüklendiğinde kayıtları göster
+    window.onload = yeniKayit;
+</script>
+
+</body>
+</html>
