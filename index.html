@@ -66,20 +66,52 @@
             gap: 20px;
             margin-top: 20px;
         }
-        .product-card {
-            background-color: #f0f0f0;
+
+        .product-card
+		{
+            background-color: blue;
             padding: 20px;
             border-radius: 5px;
             text-align: center;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 			cursor:pointer;
         }
+		
+		.product-card:hover
+		{
+			background-color: green;
+		}
+		
         .product-card h3 {
-            color: blue;
+            color: white;
 			
         }
         .product-card p {
             color: #666;
+        }
+		
+		table {
+            width: 80%;
+            border-collapse: collapse;
+            margin: 20px auto;
+            background-color: ivory;
+            border: 1px solid #ccc;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: azure;
+            color: #333;
+        }
+        tr:nth-child(even) {
+            background-color: azure;
+        }
+        tr:hover {
+            background-color: #dff0d8;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -88,7 +120,8 @@
     <div class="sidebar">
         <div>
             <h2>MENU</h2>
-            <a href="javascript:void(0);" onclick="showContent('games');">Games</a>
+            <a href="javascript:void(0);" onclick="showContent('main');">Home</a>
+			<a href="javascript:void(0);" onclick="showContent('games');">Games</a>
             <a href="javascript:void(0);" onclick="showContent('apps');">Apps</a>
             <a href="javascript:void(0);" onclick="showContent('about');">About Us</a>
 			<a href="https://store.steampowered.com/curator/35460052">My Steam Page</a>
@@ -99,6 +132,21 @@
         <div class="header">
             <center><h1>İSMAİL ÖZEL WEB APPS</h1></center>
         </div>
+
+	<div id="main" class="content active">
+		<table id="infoTable">
+        <thead>
+			<tr><th style="text-align:center;" colspan="2"><h1>Device & Browser Info</h1></th></tr>
+            <tr>
+                <th style="text-align:center;">Bilgi Türü</th>
+                <th style="text-align:center;">Değer</th>
+            </tr>
+        </thead>
+        <tbody>
+            
+        </tbody>
+		</table>
+	</div>
 
         <div id="games" class="content">
             <center><h2 style="color:blue;">GAMES</h2></center>
@@ -156,6 +204,7 @@
             <p>This project aims to share free browser-based games and applications that are easily accessible from all devices.</p>
         </div>
     </div>
+	
 
     <script type="text/javascript">
         function showContent(contentId) {
@@ -165,6 +214,74 @@
             });
             document.getElementById(contentId).classList.add('active');
         }
+		
+		 async function getDeviceDetails() {
+            const userAgent = navigator.userAgent;
+            const platform = navigator.platform;
+
+            // İşletim sistemi ve sürüm bilgisi
+            const osInfo = /Windows NT (\d+\.\d+)/.exec(userAgent) ? `Windows ${/Windows NT (\d+\.\d+)/.exec(userAgent)[1]}` :
+                /Mac OS X (\d+_\d+)/.exec(userAgent) ? `MacOS ${/Mac OS X (\d+_\d+)/.exec(userAgent)[1].replace('_', '.')}` :
+                /Android (\d+)/.exec(userAgent) ? `Android ${/Android (\d+)/.exec(userAgent)[1]}` :
+                /Linux/.exec(userAgent) ? "Linux" :
+                /iPhone OS (\d+_\d+)/.exec(userAgent) ? `iOS ${/iPhone OS (\d+_\d+)/.exec(userAgent)[1].replace('_', '.')}` :
+                "Bilinmiyor";
+
+            const connection = navigator.connection || {};
+
+            // Bilgileri toplama
+            const details = [
+                { label: "Tarayıcı Adı", value: userAgent.includes("Firefox") ? "Mozilla Firefox" :
+                    userAgent.includes("Edg") ? "Microsoft Edge" :
+                    userAgent.includes("Chrome") && !userAgent.includes("Chromium") && !userAgent.includes("Edg") ? "Google Chrome" :
+                    userAgent.includes("Safari") && !userAgent.includes("Chrome") ? "Safari" :
+                    userAgent.includes("Opera") || userAgent.includes("OPR") ? "Opera" :
+                    userAgent.includes("MSIE") || userAgent.includes("Trident") ? "Internet Explorer" : "Diğer" },
+                { label: "İşletim Sistemi ve Sürüm", value: osInfo },
+                { label: "Dil", value: navigator.language },
+                { label: "Çevrimiçi Durumu", value: navigator.onLine ? "Evet" : "Hayır" },
+                { label: "Ekran Çözünürlüğü", value: `${screen.width}x${screen.height}` },
+                { label: "Kullanılabilir Ekran Çözünürlüğü", value: `${screen.availWidth}x${screen.availHeight}` },
+                { label: "Renk Derinliği", value: `${screen.colorDepth}-bit` },
+                { label: "Piksel Yoğunluğu (DPR)", value: window.devicePixelRatio },
+                { label: "Cihaz Belleği (RAM)", value: navigator.deviceMemory ? `${navigator.deviceMemory} GB` : "Bilinmiyor" },
+                { label: "CPU Çekirdek Sayısı", value: navigator.hardwareConcurrency || "Bilinmiyor" },
+                { label: "Ağ Bağlantısı Türü", value: connection.effectiveType || "Bilinmiyor" },
+                { label: "Ağ Hızı", value: connection.downlink ? `${connection.downlink} Mbps` : "Bilinmiyor" },
+                { label: "RTT (Gecikme Süresi)", value: connection.rtt ? `${connection.rtt} ms` : "Bilinmiyor" },
+                { label: "Saat Dilimi", value: Intl.DateTimeFormat().resolvedOptions().timeZone },
+                { label: "Yerel Tarih ve Saat", value: new Date().toLocaleString() },
+                { label: "Karanlık Mod Tercihi", value: window.matchMedia("(prefers-color-scheme: dark)").matches ? "Evet" : "Hayır" },
+                { label: "Hareket Azaltma Tercihi", value: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "Evet" : "Hayır" },
+                { label: "Kullanıcı Aracısı (User-Agent)", value: userAgent },
+                { label: "Platform", value: platform }
+            ];
+
+            // Pil bilgisi
+            if (navigator.getBattery) {
+                const battery = await navigator.getBattery();
+                details.push(
+                    { label: "Pil Seviyesi", value: `${battery.level * 100}%` },
+                    { label: "Şarj Durumu", value: battery.charging ? "Evet" : "Hayır" }
+                );
+            }
+
+            return details;
+        }
+
+        async function displayInfo() {
+            const tableBody = document.getElementById("infoTable").querySelector("tbody");
+            const details = await getDeviceDetails();
+
+            details.forEach(item => {
+                const row = document.createElement("tr");
+                row.innerHTML = `<td>${item.label}</td><td>${item.value}</td>`;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Sayfa yüklendiğinde bilgileri göster
+        window.onload = displayInfo;
     </script>
 
 </body>
