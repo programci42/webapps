@@ -1,1 +1,2 @@
-https://htmlpreview.github.io/?https://github.com/programci42/webapps/blob/main/index.html
+You can click on the link below to view the project.
+https://is.gd/webapss
