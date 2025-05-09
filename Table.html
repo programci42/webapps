@@ -1,0 +1,626 @@
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>TABLE</title>
+  <style type="text/css">
+
+.btn
+{
+  display: block;
+  font-weight: 600; /* FONT KALIN */
+  text-align: center;
+  vertical-align: middle;
+  user-select: none;
+  padding: 0.5rem 1rem; /* BÃœYÃœK YASTIK */
+  font-size: 1.1rem; /* DAHA BÃœYÃœK YAZI */
+  border-radius: 0.3rem;
+  text-decoration: none;
+  transition: background-color 0.15s, border-color 0.15s;
+  border: 1px solid transparent;
+  cursor: pointer;
+  color: #fff;
+}
+
+
+.btn-default { background-color: #6c757d; border-color: #6c757d; }
+.btn-default:hover { background-color: #5a6268; border-color: #545b62; }
+
+.btn-primary { background-color: #007bff; border-color: #007bff; }
+.btn-primary:hover { background-color: #0069d9; border-color: #0062cc; }
+
+.btn-success { background-color: #28a745; border-color: #28a745; }
+.btn-success:hover { background-color: #218838; border-color: #1e7e34; }
+
+.btn-info { background-color: #17a2b8; border-color: #17a2b8; }
+.btn-info:hover { background-color: #138496; border-color: #117a8b; }
+
+.btn-warning { background-color: #ffc107; border-color: #ffc107; color: #212529; }
+.btn-warning:hover { background-color: #e0a800; border-color: #d39e00; }
+
+.btn-danger { background-color: #dc3545; border-color: #dc3545; }
+.btn-danger:hover { background-color: #c82333; border-color: #bd2130; }
+
+.btn-s {  padding: 0.25rem 0.5rem;  font-size: 0.8rem;}
+
+.btn-m {  padding: 0.5rem 1rem;  font-size: 1.1rem;}
+
+.btn-l {  padding: 0.75rem 1.5rem;  font-size: 1.3rem;}
+
+
+.btn-block {  display: block;  width: 100%;}
+
+
+.form-control {
+  display: block;
+  width: 80%;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #495057;
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 1px solid #ced4da;
+  border-radius: 0.3rem;
+  margin-bottom: 1rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus {
+  border-color: #80bdff;
+  outline: 0;
+  box-shadow: 0 0 5px rgba(0,123,255,0.5);
+}
+
+.card 
+{
+  margin 5px;
+  padding: 5px;
+  border: outset 1px solid #dee2e6;
+  border-radius: 0.5rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+
+.table {
+  width: 100%;
+  margin-bottom: 1rem;
+  color: #212529;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 0.75rem;
+  vertical-align: top;
+  border-top: 1px solid #dee2e6;
+}
+
+tr.selected {
+  background-color: #007bff !important;
+  color: white;
+}
+
+tr.selected label {
+  font-weight: bold;
+  color: white;
+}
+
+
+.table thead th {  vertical-align: bottom;  border-bottom: 2px solid #dee2e6;}
+
+.table-striped tbody tr:nth-of-type(odd) {  background-color: #f2f2f2;}
+
+.table-hover tbody tr:hover {  background-color: #cce5ff; box-shadow: inset 0 0 5px rgba(0,0,0,0.15);}
+.table-hover tbody tr:hover label {  font-weight: bold; }
+
+.table-bordered {  border: 1px solid #dee2e6;}
+
+.table-bordered th,
+.table-bordered td {  border: 1px solid #dee2e6;}
+
+.table-success tbody tr {  background-color: #d4edda;}
+
+.table-primary tbody tr { background-color: #cfe2ff;}
+
+.table-info tbody tr { background-color: #d1ecf1;}
+
+.table-secondary tbody tr { background-color: #e2e3e5; }
+
+th span 
+{
+  font-size: 0.8em;
+  color: black;
+  font-weight:bold;
+}
+
+    #settingsModal 
+	{
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #fff;
+      padding: 20px;
+      border: 1px solid #aaa;
+      z-index: 1000;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+
+    #modalOverlay 
+	{
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.4);
+      z-index: 999;
+    }
+	
+	label
+	{
+		font-family: 'MS Reference Sans Serif';
+		font-size: 12pt;
+		color: black;
+	}
+  </style>
+</head>
+<body>
+
+<div class="card">
+<button class="btn btn-primary" onclick="openSettingsModal()" style="margin-right:15px; float:left;">AYARLAR</button>
+<button class="btn btn-warning" onclick="download_table_as_csv('tbl');" style="margin-right:15px;">İNDİR</button>
+</div>
+
+<div class="">
+<table class="table table-bordered table-hover table-striped table-primary">
+	<thead id="ths"></thead>
+	<tbody id="tds"></tbody>
+</table>
+
+<table id="tbl" class="table table-bordered table-hover table-striped table-info">
+  <thead id="thbasliklar">
+    
+  </thead>
+  <tbody id="tblkayitlar">
+    
+  </tbody>
+  
+  <tfoot id="tfoot"></tfoot>
+</table>
+
+<div id="settingsModal">
+  <h3>Görünen Sütunlar</h3>
+  <div id="columnCheckboxes"></div>
+  <br>
+  <button class="btn btn-success btn-s" style="float:left; margin-right:10px;" onclick="saveColumnVisibility()">Kaydet</button>
+  <button class="btn btn-danger btn-s" onclick="closeSettingsModal()">Kapat</button>
+</div>
+<div id="modalOverlay" onclick="closeSettingsModal()"></div>
+
+<script type="text/javascript">
+  let draggedIndex = null;
+  let sortStates = {};
+  function baslik_ekle(txts)
+  {
+	let str = "<tr>";
+	for (let x = 0; x<txts.split(";").length; x++)
+	{
+		str += "<th><label>" + txts.split(";")[x] + "</label><span></span></th>";
+	}
+	str += "</tr>";	
+	
+	thbasliklar.innerHTML = str;
+	ths.innerHTML = str;
+	
+	str = "<tr>";
+	for (let x = 0; x<txts.split(";").length; x++)
+	{
+		str += "<td style="+ String.fromCharCode(34) +"text-align:center;"+ String.fromCharCode(34) +"><input type="+ String.fromCharCode(34) +"text"+ String.fromCharCode(34) +" id="+ String.fromCharCode(34) + txts.split(";")[x] + String.fromCharCode(34) +" class="+ String.fromCharCode(34) +"form-control"+ String.fromCharCode(34) +" onchange="+ String.fromCharCode(34) + "kayitara('"+ txts.split(";")[x] +"', "+ x.toString() +", atla = 0);" + String.fromCharCode(34) +" /></td>";
+	}
+	str += "</tr>";
+	
+	tds.innerHTML = str;
+	
+	Ayarla();
+  }
+  
+  function Kayit_ekle(kyts)
+  {
+	let str = "";
+	if (kyts !== "")
+	{
+	for (let x = 0; x<kyts.split("|").length; x++)
+	{	if (kyts.split("|")[x] !== "")
+	{
+		str += "<tr id="+ String.fromCharCode(34) +"tr"+ x.toString()+ String.fromCharCode(34) +">";
+		for (let y = 0; y<kyts.split("|")[x].split(";").length; y++)
+		{
+			str += "<td><label>" + kyts.split("|")[x].split(";")[y] + "</label></td>";
+		}
+		str += "</tr>";
+	}	
+	}
+	
+	tblkayitlar.innerHTML = str;
+	
+	if (kyts.split("|").length > 0)
+	{
+		str = "<tr><td style='text-align:center;' colspan='"+ kyts.split("|")[0].split(";").length.toString() +"'><label>"+ kyts.split("|").length.toString() +" adet kayit bulundu.</label></td></tr>";
+		tfoot.innerHTML = str;
+	}
+	
+	document.querySelectorAll("#tbl tbody tr").forEach(row => 
+	{
+  row.addEventListener("click", function () {
+    // Zaten seçiliyse kaldır
+    if (this.classList.contains("selected")) {
+      this.classList.remove("selected");
+    } else {
+      // Önce tüm satırlardan kaldır
+      document.querySelectorAll("#tbl tbody tr").forEach(r => r.classList.remove("selected"));
+      // Bu satıra ekle
+      this.classList.add("selected");
+    }
+  });
+});
+
+	}
+  }
+  
+	function kayitara(id, sutun, atla = 0)
+	{
+		var tablo = undefined;
+		var parts = "";
+        		
+		try
+		{
+		tablo = document.getElementById("tblkayitlar");
+		var aranan = "";
+		aranan = document.getElementById(id).value;
+		if (aranan == "")
+		{
+			for (var x = atla; x < tablo.rows.length; x++)
+			{
+				tablo.rows[x].style.display = "";
+			}
+		}
+		else
+		{
+			if (aranan.includes("-") == true)
+			{
+				parts = aranan.split("-");
+				aranan = parts[2] + "." + parts[1] + "." + parts[0];
+			}
+		
+			for (var x = atla; x < tablo.rows.length; x++)
+			{			
+				if (tablo.rows[x].cells[sutun].innerHTML.toString().includes(aranan) == true)
+				{
+					tablo.rows[x].style.display = "";
+				}
+				else
+				{
+					tablo.rows[x].style.display = "none";	
+				}
+			}
+		}
+		}
+		catch
+		{
+		}
+	}
+	
+function download_table_as_csv(table_id) 
+{
+    // Select rows from table_id
+    var rows = document.querySelectorAll('table#' + table_id + ' tr');
+    // Construct csv
+    var csv = [];
+    for (var i = 0; i < rows.length; i++) {
+        var row = [],
+            cols = rows[i].querySelectorAll('td, th');
+			
+				
+				for (var j = 0; j < cols.length; j++) 
+				{
+					// Clean innertext to remove multiple spaces and jumpline (break csv)
+				var data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, '').replace(/(\s\s)/gm, ' ');
+					// Escape double-quote with double-double-quote (see https://stackoverflow.com/questions/17808511/properly-escape-a-double-quote-in-csv)
+				data = data.replace(/"/g, '""');
+					// Push escaped string
+				row.push('"' + data + '"');
+				}
+				csv.push(row.join(';'));
+				
+			
+    }
+    var csv_string = csv.join('\n');
+    
+    // Encode CSV data with UTF-8
+    var utf8BOM = new Uint8Array([0xEF, 0xBB, 0xBF]);
+    var csvBlob = new Blob([utf8BOM, csv_string], { type: 'text/csv;charset=utf-8' });
+    
+    // Create a download link
+    var filename = 'export_' + table_id + '_' + new Date().toLocaleDateString() + '.csv';
+    var link = document.createElement('a');
+    link.style.display = 'none';
+    link.setAttribute('href', window.URL.createObjectURL(csvBlob));
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    
+    // Trigger the download
+    link.click();
+    
+    // Clean up
+    document.body.removeChild(link);
+}
+  function setCookie(name, value) {
+    const expires = new Date();
+    expires.setFullYear(expires.getFullYear() + 10);
+    document.cookie = `${name}=${encodeURIComponent(value)};expires=${expires.toUTCString()};path=/`;
+  }
+
+  function getCookie(name) {
+    const cookie = document.cookie.split('; ').find(row => row.startsWith(name + '='));
+    return cookie ? decodeURIComponent(cookie.split('=')[1]) : null;
+  }
+
+  function saveColumnOrder() {
+    const ths = Array.from(document.querySelectorAll("#tbl thead th"));
+    const order = ths.map(th => th.textContent.trim());
+    setCookie("columnOrder", order.join(","));
+  }
+
+  function applySavedOrder() {
+    const saved = getCookie("columnOrder");
+    if (!saved) return;
+
+    const order = saved.split(",");
+    const table = document.getElementById("tbl");
+
+    const currentThs = Array.from(table.querySelectorAll("thead th"));
+    const currentOrder = currentThs.map(th => th.textContent.trim());
+
+    const newOrderIndexes = order.map(label => currentOrder.indexOf(label));
+    if (newOrderIndexes.includes(-1)) return;
+
+    const thead = table.querySelector("thead tr");
+    const tbodyRows = table.querySelectorAll("tbody tr");
+
+    const reorderedThs = newOrderIndexes.map(i => currentThs[i]);
+    reorderedThs.forEach(th => thead.appendChild(th));
+
+    tbodyRows.forEach(row => {
+      const tds = Array.from(row.children);
+      const newTds = newOrderIndexes.map(i => tds[i]);
+      newTds.forEach(td => row.appendChild(td));
+    });
+  }
+
+  function setupDragAndDrop() {
+    const ths = document.querySelectorAll("#tbl thead th");
+
+    ths.forEach((th, index) => {
+      th.setAttribute("draggable", "true");
+
+      let moved = false;
+
+      th.addEventListener("dragstart", function () {
+        draggedIndex = index;
+        moved = false;
+      });
+
+      th.addEventListener("drag", function () {
+        moved = true;
+      });
+
+      th.addEventListener("dragover", function (e) {
+        e.preventDefault();
+      });
+
+      th.addEventListener("drop", function () {
+        if (!moved) return;
+        const targetIndex = Array.from(th.parentNode.children).indexOf(th);
+        if (draggedIndex === targetIndex) return;
+
+        const table = document.getElementById("tbl");
+        for (const row of table.rows) {
+          const cells = Array.from(row.cells);
+          if (draggedIndex < targetIndex) {
+            row.insertBefore(cells[draggedIndex], cells[targetIndex + 1]);
+          } else {
+            row.insertBefore(cells[draggedIndex], cells[targetIndex]);
+          }
+        }
+
+        saveColumnOrder();
+        setupSorting();
+        setupDragAndDrop();
+      });
+    });
+  }
+
+  function setupSorting() {
+    var table = document.getElementById("tbl");
+    var headers = table.getElementsByTagName("thead")[0].getElementsByTagName("th");
+
+    for (var i = 0; i < headers.length; i++) {
+        (function (index) {
+            if (!headers[index].getElementsByTagName("span")[0]) {
+                var arrow = document.createElement("span");
+                arrow.style.marginLeft = "5px";
+                arrow.textContent = "↕";
+                headers[index].appendChild(arrow);
+            }
+
+            headers[index].onclick = function (e) {
+                if (e.clientX === 0 && e.clientY === 0) return; // drag için tıklama sayma
+
+                var direction = sortStates[index] === 1 ? -1 : 1;
+                sortStates = {};
+                sortStates[index] = direction;
+
+                var rows = [];
+                var tbody = table.getElementsByTagName("tbody")[0];
+                var trs = tbody.getElementsByTagName("tr");
+
+                for (var j = 0; j < trs.length; j++) {
+                    rows.push(trs[j]);
+                }
+
+                rows.sort(function (a, b) {
+                    var aText = a.cells[index].textContent.trim();
+                    var bText = b.cells[index].textContent.trim();
+                    var aVal = guessType(aText);
+                    var bVal = guessType(bText);
+
+                    if (aVal < bVal) return -1 * direction;
+                    if (aVal > bVal) return 1 * direction;
+                    return 0;
+                });
+
+                for (var k = 0; k < rows.length; k++) {
+                    tbody.appendChild(rows[k]);
+                }
+
+                updateArrows(index, direction);
+                setCookie("sortIndex", index);
+                setCookie("sortDirection", direction);
+            };
+        })(i);
+    }
+}
+
+  function updateArrows(activeIndex, direction) {
+    const headers = document.querySelectorAll("#tbl thead th");
+    headers.forEach((th, i) => {
+      const span = th.querySelector("span");
+      span.textContent = i === activeIndex ? (direction === 1 ? "↑" : "↓") : "↕";
+    });
+  }
+
+  function guessType(value) {
+    if (!isNaN(value.replace(",", "."))) return parseFloat(value.replace(",", "."));
+    const d = new Date(value);
+    if (!isNaN(d.getTime())) return d.getTime();
+    return value.toLowerCase();
+  }
+
+ function applySavedSort() {
+    var index = parseInt(getCookie("sortIndex"), 10);
+    var direction = parseInt(getCookie("sortDirection"), 10);
+    
+    if (!isNaN(index) && !isNaN(direction)) {
+        var table = document.getElementById("tbl");
+        var thead = table.getElementsByTagName("thead")[0];
+        var headers = thead.getElementsByTagName("th");
+        var th = headers[index];
+
+        if (th) {
+            th.click();
+        }
+    }
+}
+
+function openSettingsModal() {
+  document.getElementById("settingsModal").style.display = "block";
+  document.getElementById("modalOverlay").style.display = "block";
+
+  var ths = document.querySelectorAll("#tbl thead th");
+  var container = document.getElementById("columnCheckboxes");
+  container.innerHTML = "";
+
+  for (var i = 0; i < ths.length; i++) {
+    var th = ths[i];
+    var label = document.createElement("label");
+    label.style.display = "block";
+
+    var checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = isColumnVisible(i);
+    checkbox.setAttribute("data-index", i);
+
+    label.appendChild(checkbox);
+    label.appendChild(document.createTextNode(" " + th.textContent.trim()));
+    container.appendChild(label);
+  }
+
+  var allCheckboxes = document.querySelectorAll("#columnCheckboxes input[type='checkbox']");
+  for (var j = 0; j < allCheckboxes.length; j++) {
+    allCheckboxes[j].addEventListener("change", function () {
+      var checkboxes = document.querySelectorAll("#columnCheckboxes input[type='checkbox']");
+      var hiddenTemp = [];
+      for (var k = 0; k < checkboxes.length; k++) {
+        var cb = checkboxes[k];
+        var index = parseInt(cb.getAttribute("data-index"), 10);
+        if (!cb.checked) hiddenTemp.push(index);
+      }
+      applyColumnVisibility(hiddenTemp);
+    });
+  }
+}
+
+
+
+  function closeSettingsModal() {
+    document.getElementById("settingsModal").style.display = "none";
+    document.getElementById("modalOverlay").style.display = "none";
+  }
+
+  function isColumnVisible(index) {
+    const hidden = getCookie("hiddenColumns");
+    if (!hidden) return true;
+    return !hidden.split(",").map(x => parseInt(x)).includes(index);
+  }
+
+function applyColumnVisibility(hiddenIndexes = null) {
+  if (!hiddenIndexes) {
+    const hidden = getCookie("hiddenColumns");
+    hiddenIndexes = hidden
+      ? hidden.split(",").map(x => parseInt(x)).filter(x => !isNaN(x))
+      : [];
+  }
+
+  const rows = document.querySelectorAll("#tbl tr");
+  rows.forEach(row => {
+    Array.from(row.cells).forEach((cell, i) => {
+      cell.style.display = hiddenIndexes.includes(i) ? "none" : "";
+    });
+  });
+}
+
+
+  function saveColumnVisibility() {
+    const checkboxes = document.querySelectorAll("#columnCheckboxes input[type='checkbox']");
+    const hidden = [];
+    checkboxes.forEach(cb => {
+      if (!cb.checked) hidden.push(cb.dataset.index);
+    });
+    setCookie("hiddenColumns", hidden.join(","));
+    //applyColumnVisibility();
+    closeSettingsModal();
+  }
+
+
+
+function Ayarla()
+{
+    applySavedOrder();
+    setupSorting();
+    setupDragAndDrop();
+    applySavedSort();
+    applyColumnVisibility();
+}  
+
+  window.onload = function () 
+  {
+	Ayarla();
+  };
+</script>
+
+</body>
+</html>
