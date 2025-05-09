@@ -225,6 +225,8 @@ th span
 	
 	tds.innerHTML = str;
 	
+	setCookie("alanlar", str);
+	
 	Ayarla();
   }
   
@@ -358,7 +360,8 @@ function download_table_as_csv(table_id)
     // Clean up
     document.body.removeChild(link);
 }
-  function setCookie(name, value) {
+  function setCookie(name, value) 
+  {
     const expires = new Date();
     expires.setFullYear(expires.getFullYear() + 10);
     document.cookie = `${name}=${encodeURIComponent(value)};expires=${expires.toUTCString()};path=/`;
