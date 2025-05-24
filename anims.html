@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Animasyon Gösterici</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f8f9fa;
+        }
+        table {
+            margin: auto;
+            border-collapse: collapse;
+            width: 60%;
+            background-color: white;
+            border: 2px solid #dee2e6;
+        }
+        th {
+            background-color: #343a40;
+            color: white;
+            padding: 12px;
+            font-size: 18px;
+        }
+        td {
+            padding: 10px;
+            border: 1px solid #dee2e6;
+        }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        tr:hover { background-color: #ddd; }
+        canvas {
+            border: 2px solid #000;
+            width: 800px;
+            height: 600px;
+        }
+        button, input[type="file"] {
+            padding: 10px 15px;
+            margin: 5px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .success { background-color: #28a745; color: white; }
+        .warning { background-color: #ffc107; color: black; }
+        .primary { background-color: #007bff; color: white; }
+        .secondary { background-color: #6c757d; color: white; }
+        .info { background-color: #17a2b8; color: white; }
+        .danger { background-color: #dc3545; color: white; }
+        input[type="number"]
+		{
+            padding: 5px;
+            width: 60px;
+			height: 33px;
+			font-size: 12pt;
+            text-align: center;
+        }
+    </style>
+    <!-- GIF.js kütüphanesi -->
+    <script src="gif.js"></script>
+</head>
+<body>
+
+<table>
+    <thead>
+        <tr><th colspan="2">ANİMASYON GÖSTERİCİ</th></tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+                <input type="file" id="fileInput" multiple>
+                <button class="info" onclick="previousImage()">ÖNCEKİ</button>
+                <button class="primary" onclick="nextImage()">SONRAKİ</button>
+                <button class="success" id="playButton" onclick="toggleAnimation()">OYNAT</button>
+				<button class="danger" onclick="downloadGif()">İNDİR (GIF)</button>
+				<button class="danger" onclick="recordWebM()">İNDİR (WEBM)</button>
+                <input type="number" id="indexDisplay" readonly>
+                <input type="number" id="fpsInput" placeholder="FPS" value="30" min="1">
+            </td>
+        </tr>
+        <tr>
+            <td><canvas id="canvas" width="800" height="600"></canvas></td>
+        </tr>
+    </tbody>
+</table>
+
+<script>
+    let images = [];
+    let currentIndex = 0;
+    let animationInterval;
+    let isPlaying = false;
+
+    document.getElementById('fileInput').addEventListener('change', function (event) {
+        images = [];
+        currentIndex = 0;
+        const files = event.target.files;
+        for (let file of files) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                images.push(e.target.result);
+                if (images.length === 1) displayImage();
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    function displayImage() {
+        if (images.length > 0) {
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            img.onload = function () {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            };
+            img.src = images[currentIndex];
+            document.getElementById('indexDisplay').value = currentIndex + 1;
+        }
+    }
+
+    function previousImage() {
+        if (currentIndex > 0) {
+            currentIndex--;
+            displayImage();
+        }
+    }
+
+    function nextImage() {
+        if (currentIndex < images.length - 1) {
+            currentIndex++;
+            displayImage();
+        }
+    }
+
+    function toggleAnimation() {
+        if (isPlaying) {
+            clearInterval(animationInterval);
+            document.getElementById('playButton').textContent = "OYNAT";
+        } else {
+            startAnimation();
+            document.getElementById('playButton').textContent = "DUR";
+        }
+        isPlaying = !isPlaying;
+    }
+
+    function startAnimation() {
+        let fps = parseInt(document.getElementById('fpsInput').value) || 30;
+        let interval = 1000 / fps;
+        clearInterval(animationInterval);
+        animationInterval = setInterval(() => {
+            currentIndex = (currentIndex + 1) % images.length;
+            displayImage();
+        }, interval);
+    }
+
+    document.getElementById('fpsInput').addEventListener('input', function () {
+        if (isPlaying) {
+            startAnimation();
+        }
+    });
+
+    function downloadGif() {
+        if (images.length === 0) {
+            alert("Lütfen önce resim yükleyin.");
+            return;
+        }
+
+        const gif = new GIF({
+            workers: 2,
+            quality: 10,
+            workerScript: 'gif.worker.js',
+            width: 800,
+            height: 600
+        });
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const fps = parseInt(document.getElementById('fpsInput').value) || 30;
+        const delay = 1000 / fps;
+
+        let loaded = 0;
+
+        images.forEach((src, i) => {
+            const img = new Image();
+            img.onload = function () {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                gif.addFrame(ctx, { copy: true, delay: delay });
+
+                loaded++;
+                if (loaded === images.length) {
+                    gif.render();
+                }
+            };
+            img.src = src;
+        });
+
+        gif.on('finished', function (blob) {
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = "animasyon.gif";
+            link.click();
+        });
+    }
+
+function recordWebM() {
+    if (images.length === 0) {
+        alert("Lütfen önce resimleri yükleyin!");
+        return;
+    }
+
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const fps = parseInt(document.getElementById("fpsInput").value) || 30;
+    const stream = canvas.captureStream(fps);
+    const chunks = [];
+
+    const recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
+    recorder.ondataavailable = e => {
+        if (e.data.size > 0) chunks.push(e.data);
+    };
+
+    recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: "video/webm" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "animasyon.webm";
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    let i = 0;
+    recorder.start();
+
+    let interval = setInterval(() => {
+        let img = new Image();
+        img.onload = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        };
+        img.src = images[i];
+        i++;
+
+        if (i >= images.length) {
+            clearInterval(interval);
+            setTimeout(() => recorder.stop(), 200); // Son kare sonrası durdur
+        }
+    }, 1000 / fps);
+}
+
+</script>
+</body>
+</html>
