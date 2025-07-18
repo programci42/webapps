@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<title>Ekran ve Mikrofon Kaydedici</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #4e54c8, #8f94fb);
+    color: #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 30px 15px;
+  }
+  h1 {
+    margin-bottom: 20px;
+    text-shadow: 0 0 8px rgba(0,0,0,0.4);
+  }
+  label, select, button {
+    font-size: 16px;
+  }
+  #controls {
+    background: rgba(255,255,255,0.1);
+    padding: 20px 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    max-width: 500px;
+    width: 100%;
+  }
+  select {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: none;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    min-width: 180px;
+    cursor: pointer;
+  }
+  button {
+    padding: 10px 22px;
+    border: none;
+    border-radius: 8px;
+    background: #3a3fc8;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    flex: 1 1 120px;
+    min-width: 120px;
+  }
+  button:hover:not(:disabled) {
+    background: #272b8f;
+  }
+  button:disabled {
+    background: #6669aa;
+    cursor: not-allowed;
+  }
+  #status {
+    margin-top: 15px;
+    font-weight: 600;
+    min-height: 22px;
+    text-shadow: 0 0 3px rgba(0,0,0,0.3);
+  }
+  video {
+    margin-top: 30px;
+    max-width: 90vw;
+    max-height: 480px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    background: #000;
+  }
+  @media (max-width: 480px) {
+    #controls {
+      flex-direction: column;
+      gap: 12px;
+    }
+    button {
+      flex: 1 1 auto;
+      min-width: auto;
+    }
+  }
+</style>
+</head>
+<body>
+
+<h1>Ekran ve Mikrofon Kaydedici</h1>
+
+<div id="controls">
+  <label for="micSelect">Mikrofon Seç:</label>
+  <select id="micSelect" aria-label="Mikrofon Seç"></select>
+  <button id="toggleMicBtn" type="button">Mikrofon Kapalı</button>
+  <button id="startBtn" type="button">Kayda Başla</button>
+  <button id="stopBtn" type="button" disabled>Durdur</button>
+</div>
+<br/>
+<label style="color:white;">Yazar: İsmail ÖZEL</label>
+<div id="status" aria-live="polite">Durum: Beklemede</div>
+
+<video id="recordedVideo" controls></video>
+
+<script type="text/javascript">
+  const micSelect = document.getElementById('micSelect');
+  const toggleMicBtn = document.getElementById('toggleMicBtn');
+  const startBtn = document.getElementById('startBtn');
+  const stopBtn = document.getElementById('stopBtn');
+  const statusDiv = document.getElementById('status');
+  const videoElem = document.getElementById('recordedVideo');
+
+  let mediaRecorder;
+  let recordedChunks = [];
+  let mikrofonStream = null;
+  let ekranStream = null;
+  let mikrofonTrack = null;
+  let mikrofonEnabled = true;
+
+  async function listeleMikrofonlar() {
+    try {
+      await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      const cihazlar = await navigator.mediaDevices.enumerateDevices();
+      const mikrofonlar = cihazlar.filter(dev => dev.kind === 'audioinput');
+      micSelect.innerHTML = '';
+      mikrofonlar.forEach((mic, i) => {
+        const option = document.createElement('option');
+        option.value = mic.deviceId;
+        option.text = mic.label || `Mikrofon ${i + 1}`;
+        micSelect.appendChild(option);
+      });
+    } catch (e) {
+      alert("Mikrofon cihazları alınamadı: " + e.message);
+    }
+  }
+
+  toggleMicBtn.addEventListener('click', () => {
+    if (!mikrofonTrack) return;
+    mikrofonEnabled = !mikrofonEnabled;
+    mikrofonTrack.enabled = mikrofonEnabled;
+    toggleMicBtn.textContent = mikrofonEnabled ? "Mikrofon Açık" : "Mikrofon Kapalı";
+  });
+
+  startBtn.addEventListener('click', async () => {
+    startBtn.disabled = true;
+    stopBtn.disabled = false;
+    statusDiv.textContent = "Durum: Kaydediliyor...";
+
+    try {
+      if (mikrofonStream) {
+        mikrofonStream.getTracks().forEach(t => t.stop());
+      }
+      mikrofonStream = await navigator.mediaDevices.getUserMedia({
+        audio: { deviceId: micSelect.value ? { exact: micSelect.value } : undefined },
+        video: false
+      });
+      mikrofonTrack = mikrofonStream.getAudioTracks()[0];
+      mikrofonTrack.enabled = mikrofonEnabled;
+
+      ekranStream = await navigator.mediaDevices.getDisplayMedia({
+        video: { cursor: "motion" },
+        audio: false
+      });
+
+      const videoTrack = ekranStream.getVideoTracks()[0];
+      const settings = videoTrack.getSettings();
+      if (settings.displaySurface === 'monitor') {
+        window.blur(); // Pencereyi arka plana at
+      }
+
+      const combinedStream = new MediaStream([
+        ...ekranStream.getVideoTracks(),
+        ...mikrofonStream.getAudioTracks()
+      ]);
+
+      recordedChunks = [];
+      mediaRecorder = new MediaRecorder(combinedStream);
+
+      mediaRecorder.ondataavailable = e => {
+        if (e.data.size > 0) recordedChunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = () => {
+  const blob = new Blob(recordedChunks, { type: "video/webm" });
+  const url = URL.createObjectURL(blob);
+
+  videoElem.src = url;
+  videoElem.muted = true;  // autoplay kısıtlaması için sessiz yap
+  videoElem.play().catch(() => {});  // direkt play dene
+
+  videoElem.oncanplay = () => {
+    videoElem.muted = false;  // videoya ses gelince sessizi aç
+    videoElem.play().catch(() => {});
+  };
+
+  // İndirme linki
+  const a = document.createElement('a');
+  a.style.display = 'none';
+  a.href = url;
+  a.download = 'ekran_mikrofon_kaydi.webm';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 150);
+
+  statusDiv.textContent = "Durum: Kayıt tamamlandı.";
+};
+
+
+      mediaRecorder.start();
+
+      ekranStream.getVideoTracks()[0].addEventListener('ended', () => {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+          mediaRecorder.stop();
+          startBtn.disabled = false;
+          stopBtn.disabled = true;
+        }
+      });
+
+    } catch (err) {
+      alert("Kayıt başlatılamadı: " + err.message);
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      statusDiv.textContent = "Durum: Hata oluştu.";
+    }
+  });
+
+  stopBtn.addEventListener('click', () => {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      statusDiv.textContent = "Durum: Kayıt durduruldu.";
+    }
+  });
+
+  listeleMikrofonlar();
+</script>
+
+</body>
+</html>
