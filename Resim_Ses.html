@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RESIM VE SES ISLEMLERI</title>
+</head>
+<body style="background-color:azure;font-family:'MS Reference Sans Serif'; font-size:12pt;">
+<center>
+	<h3>RESIM VE SES ISLEMLERI</h3><br/>
+  <label for="resimYukleInput">RESİM DOSYASI: </label>&nbsp;<input type="file" id="resimYukleInput" accept="image/*" style="padding:10px;border:outset;background-color:lightyellow;border-radius:6px;border-color:gray;">&nbsp;&nbsp;&nbsp;
+  <label for="sesYukleInput">SES DOSYASI: </label>&nbsp;<input type="file" id="sesYukleInput" accept="audio/*" style="padding:10px;border:outset;background-color:lightyellow;border-radius:6px;border-color:gray;">&nbsp;&nbsp;&nbsp;
+  <input type="button" id="btnuygula" value="UYGULA" style="margin:10px;width:150px;height:40px;background-color:green;color:white;font-weight:bold;" onclick="javascript:img.src = txtsonuc.value;" />
+  <div id="sonuc" style="margin:10px;padding:3px;border:outset;border-radius:6px;border-color:gainsboro;background-color:ivory;">
+	<textarea id="txtsonuc" name="txtsonuc" rows="26" cols="100" style="width:99%;font-family:'MS Reference Sans Serif'; font-size:12pt;"></textarea>
+  </div>
+  <div id="resim" style="border:outset;border-radius:6px;border-color:gainsboro;background-color:white;">
+	<img src="#" id="img" />
+  </div>
+</center>
+  <script type="text/javascript">
+    function resmiBase64eDonustur(resimURL, callback) {
+      var img = new Image();
+      img.crossOrigin = 'Anonymous';
+
+      img.onload = function () {
+        var canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+
+        var base64String = canvas.toDataURL('image/png');
+        callback(base64String);
+      };
+
+      img.src = resimURL;
+    }
+	
+var pixelArray = [];
+function pngToPixelArray(pngFile)
+{
+    var img = new Image();
+    img.onload = function() {
+        var canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        var imageData = ctx.getImageData(0, 0, img.width, img.height);
+        var pixels = imageData.data;
+        pixelArray = [];
+        for (var i = 0; i < pixels.length; i += 4) {
+            pixelArray.push([pixels[i], pixels[i + 1], pixels[i + 2], pixels[i + 3]]);
+        }
+    };
+    img.src = pngFile;
+}
+
+function convertToYabasicFormat(pixelArray)
+{
+    var yabasicFormat = "DIM px("+ pixelArray.length.toString() +", 3)\n";
+    for (var i = 0; i < pixelArray.length; i++) {
+        var pixel = pixelArray[i];
+        yabasicFormat += "px(" + i + ", 0) = " + pixel[0] + "\n";
+        yabasicFormat += "px(" + i + ", 1) = " + pixel[1] + "\n";
+        yabasicFormat += "px(" + i + ", 2) = " + pixel[2] + "\n";
+        yabasicFormat += "px(" + i + ", 3) = " + pixel[3] + "\n";
+    }
+    return yabasicFormat;
+}
+
+		
+	function convertToBase64()
+	{
+            var fileInput = document.getElementById('resimYukleInput');
+
+            if (fileInput.files.length > 0)
+			{
+                var selectedFile = fileInput.files[0];
+
+                var reader = new FileReader();
+                reader.onload = function (e)
+				{
+                    var base64String = e.target.result;
+					txtsonuc.value = base64String;
+                };
+
+                reader.readAsDataURL(selectedFile);
+            } else {
+                resultDiv.innerHTML = 'Lütfen bir resim dosyası seçin.';
+            }
+    }
+
+    document.getElementById('resimYukleInput').addEventListener('change', function (e) {
+      var dosya = e.target.files[0];	
+      if (dosya) 
+	  {
+        var resimURL = undefined;
+		if (dosya.type == "image/gif")
+		{
+			convertToBase64();
+		}	
+		else
+		{
+			resimURL = URL.createObjectURL(dosya);
+			resmiBase64eDonustur(resimURL, function (base64String) {
+				document.getElementById('txtsonuc').value = base64String;
+			});
+		}	
+      }
+    });
+	
+	document.getElementById('sesYukleInput').addEventListener('change', function (e) {
+      var dosya = e.target.files[0];
+
+      if (dosya) {
+        var okuyucu = new FileReader();
+
+        okuyucu.onload = function (event) {
+          var byteKodlari = new Uint8Array(event.target.result);
+
+          // Byte kodları kullanılabilir, örneğin bir API'ye gönderilebilir.
+          console.log('Ses Byte Kodları:', byteKodlari);
+
+          // Ekranda gösterme örneği:
+          var sonucDiv = document.getElementById('sonuc');
+          txtsonuc.value =  byteKodlari.join(',');
+        };
+
+        okuyucu.readAsArrayBuffer(dosya);
+      }
+    });
+  </script>
+</body>
+</html>
