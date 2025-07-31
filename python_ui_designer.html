@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Python Arayüz Tasarımı</title>
+  <style type="text/css">
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #7F7FD5, #86A8E7, #91EAE4);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    #toolbar {
+      background-color: #fff;
+      padding: 10px;
+      text-align: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .tool-btn {
+      background: linear-gradient(45deg, #ff4e50, #f9d423);
+      border: none;
+      padding: 10px 20px;
+      margin: 0 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      color: white;
+    }
+    .tool-btn:nth-child(2) {
+      background: linear-gradient(45deg, #00b09b, #96c93d);
+    }
+    #mainArea {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px;
+      gap: 20px;
+    }
+    .toolbox {
+      background: #fff;
+      width: 200px;
+      padding: 20px;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .toolbox button {
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      background: #2196F3;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .toolbox button:hover {
+      background: #1976D2;
+    }
+    #formPanel {
+      width: 800px;
+      height: 600px;
+      border: 2px dashed #fff;
+      border-radius: 10px;
+      background: white;
+      position: relative;
+    }
+    .draggable {
+      position: absolute;
+      padding: 5px;
+      border: 1px solid #aaa;
+      background: #fafafa;
+      border-radius: 5px;
+      cursor: move;
+      user-select: none;
+    }
+    .draggable.selected {
+      border: 2px solid #ff4e50;
+      background: #fff3cd;
+    }
+    select.draggable:focus {
+      outline: none;
+    }
+    select.draggable option {
+      pointer-events: none;
+    }
+    #propertyPanel {
+      background: #fff;
+      width: 250px;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    #propertyPanel h3 {
+      margin-top: 0;
+      color: #c62828;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 5px;
+    }
+    #propertyPanel input[type="text"] {
+      width: 100%;
+      padding: 6px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    #deleteBtn {
+      background: #f44336;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 10px;
+    }
+    #deleteBtn:hover {
+      background: #d32f2f;
+    }
+    
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+    .modal-content {
+      background-color: #fefefe;
+      margin: 5% auto;
+      padding: 20px;
+      border: none;
+      border-radius: 10px;
+      width: 60%;
+      max-width: 600px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+    .close {
+      color: #aaa;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .close:hover {
+      color: #000;
+    }
+    #codeEditor {
+      width: 100%;
+      height: 300px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 10px;
+      resize: vertical;
+    }
+    #saveCodeBtn {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    #saveCodeBtn:hover {
+      background: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <div id="toolbar">
+    <button class="tool-btn" onclick="newDesign()">YENİ</button>
+    <button class="tool-btn" onclick="saveDesign()">KAYDET</button>
+  </div>
+
+  <div id="mainArea">
+    <div class="toolbox">
+      <button onclick="addElement('button')">🟤 Button</button>
+      <button onclick="addElement('input')">📄 TextBox</button>
+      <button onclick="addElement('checkbox')">✅ CheckBox</button>
+      <button onclick="addElement('label')">🏷️ Label</button>
+      <button onclick="addElement('select')">📋 ComboBox</button>
+      <button onclick="addElement('ul')">📄 ListView</button>
+      <button onclick="addElement('tree')">🌳 TreeView</button>
+    </div>
+
+    <div id="formPanel"></div>
+
+    <div id="propertyPanel">
+      <h3>Özellikler</h3>
+      <div id="propertyFields">Özelliklerini düzenlemek için bir element seçin</div>
+      <button id="deleteBtn" onclick="deleteSelectedElement()" style="display: none;">SİL</button>
+    </div>
+  </div>
+
+  <!-- Code Editor Modal -->
+  <div id="codeModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Olay Kodu Düzenle</h3>
+        <span class="close" onclick="closeCodeModal()">&times;</span>
+      </div>
+      <p>Bu kontrol için tıklama olayı kodunu yazın:</p>
+      <textarea id="codeEditor" placeholder="# Buraya Python kodunuzu yazın&#10;# Örnek:&#10;# msg.showinfo('Bilgi', 'Butona tıklandı!')&#10;return None"></textarea>
+      <button id="saveCodeBtn" onclick="saveEventCode()">KAYDET</button>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    let idCounter = 0;
+    let selectedElement = null;
+    let currentEditingElement = null;
+    let elementEvents = {}; // Her elementin olay kodunu saklamak için
+
+    function newDesign() {
+      document.getElementById("formPanel").innerHTML = "";
+      document.getElementById("propertyFields").innerHTML = "Özelliklerini düzenlemek için bir element seçin";
+      selectedElement = null;
+      elementEvents = {};
+      document.getElementById("deleteBtn").style.display = "none";
+    }
+
+    function addElement(type) {
+      const panel = document.getElementById("formPanel");
+      let el;
+      idCounter++;
+      let id = type + '_' + idCounter;
+
+      if (type === 'button') {
+        el = document.createElement('button');
+        el.textContent = 'Button';
+        el.style.width = '125px';
+        el.style.height = '40px';
+      } else if (type === 'input') {
+        el = document.createElement('input');
+        el.type = 'text';
+      } else if (type === 'checkbox') {
+        el = document.createElement('input');
+        el.type = 'checkbox';
+      } else if (type === 'label') {
+        el = document.createElement('label');
+        el.textContent = 'Label';
+      } else if (type === 'select') {
+        el = document.createElement('select');
+        el.setAttribute('onmousedown', 'event.preventDefault();');
+        el.innerHTML = '<option>Option 1</option><option>Option 2</option>';
+      } else if (type === 'ul') {
+        el = document.createElement('ul');
+        el.innerHTML = '<li>Item 1</li><li>Item 2</li>';
+      } else if (type === 'tree') {
+        el = document.createElement('ul');
+        el.innerHTML = '<li>Root<ul><li>Child</li></ul></li>';
+        el.setAttribute('data-columns', 'Column1,Column2,Column3');
+      }
+
+      el.classList.add('draggable');
+      el.id = id;
+      el.style.left = '10px';
+      el.style.top = '10px';
+      
+      // Varsayılan olay kodu
+      elementEvents[id] = 'return None';
+      
+      // Tek tıklama - seçim
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectElement(el);
+      });
+      
+      // Çift tıklama - kod editörü
+      el.addEventListener('dblclick', (e) => {
+        e.stopPropagation();
+        openCodeModal(el);
+      });
+      
+      panel.appendChild(el);
+      makeDraggable(panel, el);
+    }
+
+    function selectElement(el) {
+      // Önceki seçimi temizle
+      if (selectedElement) {
+        selectedElement.classList.remove('selected');
+      }
+      
+      selectedElement = el;
+      el.classList.add('selected');
+      showProperties(el);
+      document.getElementById("deleteBtn").style.display = "block";
+    }
+
+    function deleteSelectedElement() {
+      if (selectedElement) {
+        const id = selectedElement.id;
+        selectedElement.remove();
+        delete elementEvents[id];
+        selectedElement = null;
+        document.getElementById("propertyFields").innerHTML = "Özelliklerini düzenlemek için bir element seçin";
+        document.getElementById("deleteBtn").style.display = "none";
+      }
+    }
+
+    function openCodeModal(el) {
+      currentEditingElement = el;
+      const modal = document.getElementById("codeModal");
+      const codeEditor = document.getElementById("codeEditor");
+      
+      // Mevcut kodu editöre yükle
+      codeEditor.value = elementEvents[el.id] || 'return None';
+      
+      modal.style.display = "block";
+    }
+
+    function closeCodeModal() {
+      document.getElementById("codeModal").style.display = "none";
+      currentEditingElement = null;
+    }
+
+    function saveEventCode() {
+      if (currentEditingElement) {
+        const code = document.getElementById("codeEditor").value;
+        elementEvents[currentEditingElement.id] = code;
+        closeCodeModal();
+      }
+    }
+
+    // Modal dışına tıklanırsa kapat
+    window.onclick = function(event) {
+      const modal = document.getElementById("codeModal");
+      if (event.target == modal) {
+        closeCodeModal();
+      }
+    }
+
+    function makeDraggable(panel, el) {
+      let offsetX, offsetY, isDown = false;
+
+      el.addEventListener('mousedown', function(e) {
+        isDown = true;
+        offsetX = e.offsetX;
+        offsetY = e.offsetY;
+      });
+
+      document.addEventListener('mousemove', function(e) {
+        if (isDown) {
+          el.style.left = (e.pageX - panel.offsetLeft - offsetX) + 'px';
+          el.style.top = (e.pageY - panel.offsetTop - offsetY) + 'px';
+        }
+      });
+
+      document.addEventListener('mouseup', function() {
+        isDown = false;
+      });
+    }
+
+    // Özellik paneline text, renk, yazı tipi, pozisyon ve boyut özellikleri ekle
+    function showProperties(el) {
+      const propDiv = document.getElementById('propertyFields');
+      propDiv.innerHTML = '';
+
+      let props = [
+        { label: 'İçerik / Text', key: 'text', value: el.textContent || el.value },
+        { label: 'Arkaplan Rengi', key: 'backgroundColor', value: el.style.backgroundColor || '#fafafa' },
+        { label: 'Yazı Rengi', key: 'color', value: el.style.color || '#000000' },
+        { label: 'Font Ailesi', key: 'fontFamily', value: el.style.fontFamily || 'inherit' },
+        { label: 'Font Boyutu (px)', key: 'fontSize', value: el.style.fontSize?.replace('px','') || '14' },
+        { label: 'Sol Pozisyon (px)', key: 'left', value: el.style.left.replace('px','') },
+        { label: 'Üst Pozisyon (px)', key: 'top', value: el.style.top.replace('px','') },
+        { label: 'Genişlik (px)', key: 'width', value: el.style.width?.replace('px','') || '' },
+        { label: 'Yükseklik (px)', key: 'height', value: el.style.height?.replace('px','') || '' }
+      ];
+
+      // Button özel özellikleri
+      if (el.tagName.toLowerCase() === 'button') {
+        props.push(
+          { label: 'Resim', key: 'image', value: el.getAttribute('data-image') || '', type: 'file' },
+          { label: 'Compound', key: 'compound', value: el.getAttribute('data-compound') || 'none', type: 'select', 
+            options: ['none', 'bottom', 'top', 'left', 'right', 'center'] }
+        );
+      }
+
+      // TreeView özel özellikleri
+      if (el.getAttribute('data-tree') === 'true' || (el.tagName.toLowerCase() === 'ul' && el.id.includes('tree'))) {
+        props.push(
+          { label: 'Sütunlar (virgülle ayır)', key: 'columns', value: el.getAttribute('data-columns') || 'Column1,Column2,Column3' }
+        );
+      }
+
+      props.forEach(p => {
+        const lbl = document.createElement('label');
+        lbl.textContent = p.label;
+        
+        let inp;
+        if (p.type === 'select') {
+          inp = document.createElement('select');
+          p.options.forEach(opt => {
+            const option = document.createElement('option');
+            option.value = opt;
+            option.textContent = opt;
+            if (opt === p.value) option.selected = true;
+            inp.appendChild(option);
+          });
+        } else if (p.type === 'file') {
+          const container = document.createElement('div');
+          container.style.marginBottom = '10px';
+          
+          const fileBtn = document.createElement('button');
+          fileBtn.type = 'button';
+          fileBtn.textContent = 'Resim Seç';
+          fileBtn.style.width = '100%';
+          fileBtn.style.padding = '6px';
+          fileBtn.style.border = '1px solid #ccc';
+          fileBtn.style.borderRadius = '5px';
+          fileBtn.style.backgroundColor = '#f8f9fa';
+          fileBtn.style.cursor = 'pointer';
+          
+          const fileInput = document.createElement('input');
+          fileInput.type = 'file';
+          fileInput.accept = 'image/*';
+          fileInput.style.display = 'none';
+          
+          const preview = document.createElement('div');
+          preview.style.marginTop = '5px';
+          preview.style.fontSize = '12px';
+          preview.style.color = '#666';
+          if (p.value) {
+            preview.textContent = 'Resim seçildi ✓';
+          } else {
+            preview.textContent = 'Resim seçilmedi';
+          }
+          
+          fileBtn.onclick = () => fileInput.click();
+          
+          fileInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+              const reader = new FileReader();
+              reader.onload = (event) => {
+                const base64 = event.target.result.split(',')[1]; // Remove data:image/...;base64, prefix
+                el.setAttribute('data-image', base64);
+                el.setAttribute('data-image-name', file.name);
+                preview.textContent = `${file.name} seçildi ✓`;
+                preview.style.color = '#4CAF50';
+              };
+              reader.readAsDataURL(file);
+            }
+          };
+          
+          container.appendChild(fileBtn);
+          container.appendChild(fileInput);
+          container.appendChild(preview);
+          propDiv.appendChild(lbl);
+          propDiv.appendChild(container);
+          return; // Skip the normal input creation
+        } else {
+          inp = document.createElement('input');
+          inp.type = 'text';
+          inp.value = p.value;
+        }
+        
+        inp.onchange = inp.oninput = () => {
+          if (p.key === 'text') {
+            el.textContent = inp.value;
+            if (el.tagName.toLowerCase() === 'input') el.value = inp.value;
+          } else if (p.key === 'image') {
+            el.setAttribute('data-image', inp.value);
+          } else if (p.key === 'compound') {
+            el.setAttribute('data-compound', inp.value);
+          } else if (p.key === 'columns') {
+            el.setAttribute('data-columns', inp.value);
+          } else {
+            el.style[p.key] = inp.value + (['fontSize','left','top','width','height'].includes(p.key) ? 'px' : '');
+          }
+        };
+        propDiv.appendChild(lbl);
+        propDiv.appendChild(inp);
+      });
+    }
+
+    function saveDesign() {
+      const elements = document.querySelectorAll("#formPanel .draggable");
+      let pythonCode = `import base64
+import tkinter as tk
+import tkinter.messagebox as msg
+from tkinter import ttk
+import sqlite3
+import os
+
+root = tk.Tk()
+root.title("PROGRAM")
+root.geometry("800x600+100+100")
+style = ttk.Style()
+style.theme_use("clam")
+
+`;
+
+      // Olay fonksiyonlarını oluştur
+      elements.forEach(el => {
+        const name = el.id.replace(/[^a-zA-Z0-9]/g, "_");
+        const eventCode = elementEvents[el.id] || 'return None';
+        pythonCode += `def ${name}_click():\n`;
+        const lines = eventCode.split('\n');
+        lines.forEach(line => {
+          pythonCode += `    ${line}\n`;
+        });
+        pythonCode += `\n`;
+      });
+
+      elements.forEach(el => {
+        const type = el.tagName.toLowerCase();
+        const x = el.style.left.replace("px", "");
+        const y = el.style.top.replace("px", "");
+        const width = el.style.width.replace("px", "");
+        const height = el.style.height.replace("px", "");
+
+        const name = el.id.replace(/[^a-zA-Z0-9]/g, "_");
+        if (type === 'button') {
+          const imagePath = el.getAttribute('data-image') || '';
+          const compound = el.getAttribute('data-compound') || 'none';
+          
+           if (imagePath) 
+          {
+            pythonCode += `${name}_iconbase64 = "${imagePath}" \n`;
+            pythonCode += `${name}_iconimg = tk.PhotoImage(data=base64.b64decode(${name}_iconbase64))\n`;
+            pythonCode += `${name} = ttk.Button(root, text='${el.textContent}', image=${name}_iconimg, compound='${compound}', command=${name}_click)\n`;
+          }
+          else
+          {    
+            pythonCode += `${name} = ttk.Button(root, text='${el.textContent}', compound='${compound}', command=${name}_click)\n`;
+          }  
+          pythonCode += `${name}.place(x=${x}, y=${y}`;
+
+          if (width !== undefined && width !== '' && width !== null) {
+              pythonCode += `, width=${width}`;
+          }
+
+          if (height !== undefined && height !== '' && height !== null) {
+              pythonCode += `, height=${height}`;
+          }
+
+          pythonCode += `)\n`;
+        }   
+        else if (type === 'input') {
+          pythonCode += `${name} = ttk.Entry(root)\n${name}.place(x=${x}, y=${y}`;
+          if (width) pythonCode += `, width=${width}`;
+          if (height) pythonCode += `, height=${height}`;
+          pythonCode += `)\n${name}.bind('<Button-1>', lambda e: ${name}_click())\n`;
+        }
+        else if (el.type === 'checkbox') {
+          pythonCode += `${name} = ttk.Checkbutton(root, text='Option', command=${name}_click)\n${name}.place(x=${x}, y=${y})\n`;
+        }
+        else if (type === 'label') {
+          pythonCode += `${name} = ttk.Label(root, text='${el.textContent}')\n${name}.place(x=${x}, y=${y}`;
+          if (width) pythonCode += `, width=${width}`;
+          if (height) pythonCode += `, height=${height}`;
+          pythonCode += `)\n${name}.bind('<Button-1>', lambda e: ${name}_click())\n`;
+        }
+        else if (type === 'select') {
+          pythonCode += `${name}_var = tk.StringVar()\n`;
+          pythonCode += `${name} = ttk.Combobox(root, textvariable=${name}_var, values=['Option 1', 'Option 2'])\n`;
+          pythonCode += `${name}.place(x=${x}, y=${y}`;
+          if (width) pythonCode += `, width=${width}`;
+          if (height) pythonCode += `, height=${height}`;
+          pythonCode += `)\n${name}.bind('<<ComboboxSelected>>', lambda e: ${name}_click())\n`;
+        }
+        else if (type === 'ul' && !el.id.includes('tree')) {
+          pythonCode += `${name} = tk.Listbox(root)\n`;
+          pythonCode += `${name}.insert(0, 'Item 1')\n${name}.insert(1, 'Item 2')\n`;
+          pythonCode += `${name}.place(x=${x}, y=${y}`;
+          if (width) pythonCode += `, width=${width}`;
+          if (height) pythonCode += `, height=${height}`;
+          pythonCode += `)\n${name}.bind('<Button-1>', lambda e: ${name}_click())\n`;
+        }
+        else if (type === 'ul' && el.id.includes('tree')) {
+          const columns = el.getAttribute('data-columns') || 'Column1,Column2,Column3';
+          const columnList = columns.split(',').map(c => c.trim());
+          
+          pythonCode += `${name} = ttk.Treeview(root, columns=(`;
+          columnList.forEach((col, index) => {
+            pythonCode += `'${col}'`;
+            if (index < columnList.length - 1) pythonCode += ', ';
+          });
+          pythonCode += `), show='tree headings')\n`;
+          
+          // Sütun başlıklarını ayarla
+          columnList.forEach(col => {
+            pythonCode += `${name}.heading('${col}', text='${col}')\n`;
+            pythonCode += `${name}.column('${col}', width=100)\n`;
+          });
+          
+          pythonCode += `${name}.place(x=${x}, y=${y}`;
+          if (width) pythonCode += `, width=${width}`;
+          if (height) pythonCode += `, height=${height}`;
+          pythonCode += `)\n${name}.bind('<Button-1>', lambda e: ${name}_click())\n`;
+        }
+      });
+      
+      pythonCode += "\nroot.mainloop()";
+      
+      const blob = new Blob([pythonCode], { type: 'text/x-python' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'arayuz.py';
+      a.click();
+    }
+  </script>
+</body>
+</html>
