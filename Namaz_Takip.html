@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>NAMAZ TAKİP TAKVİMİ</title>
+<style type="text/css">
+/* (A) ENTIRE PAGE */
+#cal-wrap * { font-family: arial, sans-serif; }
+.ninja { display: none !important; }
+
+/* (B) CONTAINER */
+#cal-wrap { max-width: auto; }
+
+/* (C) PERIOD SELECTOR */
+#cal-date { 
+  display: flex; 
+  justify-content: center;
+  margin-bottom: 10px;
+}
+#cal-mth, #cal-yr {
+  box-sizing: border-box;
+  padding: 10px 20px;
+  font-size: 1.2em;
+  border: 0;
+  margin: 0 5px;
+}
+
+/* (D) CALENDAR */
+#calendar {
+  width: 100%;
+  border-collapse: collapse;
+}
+#calendar tr.head td {
+  font-weight: bold;
+  text-transform: uppercase;
+  color: #fff;
+  background: #2c7a2c;
+  padding: 15px;
+  text-align: center;
+}
+#calendar tr.day td {
+  border: 1px solid #ddd;
+  width: 14.28%;
+  padding: 15px 5px;
+  vertical-align: top;
+  text-align: center;
+  height: 60px;
+}
+#calendar tr.day td:hover {
+  background: #e8f5e8;
+  cursor: pointer;
+  text-align: center;
+}
+#calendar tr td.blank {
+  background: #f5f5f5;
+}
+#calendar tr td.today {
+  border: 3px solid #2c7a2c;
+  font-weight: bold;
+}
+#calendar tr td.complete {
+  background: #2c7a2c !important;
+  color: white;
+}
+#calendar tr td.partial {
+  background: #ff8c00 !important;
+  color: white;
+}
+#calendar .dd {
+  font-size: 1.2em;
+  color: #333;
+}
+#calendar .evt {
+  margin-top: 5px;
+  font-size: 0.7em;
+  font-weight: bold;
+  overflow: hidden;
+  color: inherit;
+}
+
+/* (E) PRAYER TRACKER */
+#cal-event {
+  padding: 20px;
+  margin-top: 20px;
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+#cal-event h1 {
+  color: #2c7a2c;
+  padding: 0;
+  margin: 0 0 10px 0;
+  text-align: center;
+}
+#evt-date {
+  color: #555;
+  margin: 10px 0 20px 0;
+  text-align: center;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.prayer-item {
+  display: flex;
+  align-items: center;
+  margin: 15px 0;
+  padding: 10px;
+  background: white;
+  border-radius: 5px;
+  border: 1px solid #e0e0e0;
+}
+.prayer-item input[type="checkbox"] {
+  margin-right: 15px;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+.prayer-item label {
+  cursor: pointer;
+  font-size: 1.1em;
+  font-weight: 500;
+  color: #333;
+  flex-grow: 1;
+}
+
+#cal-event .button-group {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+#cal-event input[type=button], #cal-event input[type=submit] {
+  padding: 12px 20px;
+  font-size: 1.1em;
+  border: 0;
+  background: #2c7a2c;
+  color: #fff;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+#cal-event input[type=button]:hover, #cal-event input[type=submit]:hover {
+  background: #1f5f1f;
+}
+
+#evt-del {
+  background: #dc3545 !important;
+}
+#evt-del:hover {
+  background: #c82333 !important;
+}
+
+/* (F) DATA MANAGEMENT */
+.data-management {
+  text-align: center;
+  margin: 20px 0;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+.data-management h3 {
+  color: #2c7a2c;
+  margin-bottom: 15px;
+}
+.data-management button {
+  padding: 10px 20px;
+  margin: 5px 10px;
+  font-size: 1em;
+  border: 0;
+  background: #2c7a2c;
+  color: #fff;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.data-management button:hover {
+  background: #1f5f1f;
+}
+.data-management input[type="file"] {
+  display: none;
+}
+
+/* Legend */
+.legend {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin: 15px 0;
+  font-size: 0.9em;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.legend-color {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  border: 1px solid #ccc;
+}
+.legend-complete { background: #2c7a2c; }
+.legend-partial { background: #ff8c00; }
+.legend-none { background: white; }
+</style>
+</head>
+<body>
+<div id="cal-wrap">
+  <center><h2 style="color: #2c7a2c; margin: 20px 0;">NAMAZ TAKİP TAKVİMİ</h2></center>
+  
+  <!-- Legend -->
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-color legend-complete"></div>
+      <span>Tamamlandı (5/5)</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color legend-partial"></div>
+      <span>Eksik Var</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color legend-none"></div>
+      <span>Hiç Kılınmadı</span>
+    </div>
+  </div>
+
+  <!-- Data Management -->
+  <div class="data-management">
+    <h3>VERİ YÖNETİMİ</h3>
+    <button onclick="exportData()">Verileri Dışa Aktar</button>
+    <button onclick="document.getElementById('import-file').click()">Verileri İçe Aktar</button>
+    <input type="file" id="import-file" accept=".json" onchange="importData(this)">
+    <button onclick="clearAllData()" style="background: #dc3545; margin-left: 20px;">Tüm Verileri Temizle</button>
+  </div>
+
+  <div id="cal-date">
+    <div><select id="cal-mth"></select></div>
+    <div><select id="cal-yr"></select></div>
+  </div>
+
+  <!-- (B) CALENDAR -->
+  <div id="cal-container"></div>
+
+  <!-- (C) PRAYER TRACKER FORM -->
+  <form id="cal-event">
+    <h1 id="evt-head">VAKİTLER</h1>
+    <div id="evt-date"></div>
+    
+    <div class="prayer-item">
+      <input type="checkbox" id="sabah" name="prayers" value="sabah">
+      <label for="sabah">SABAH NAMAZI</label>
+    </div>
+    
+    <div class="prayer-item">
+      <input type="checkbox" id="oglen" name="prayers" value="oglen">
+      <label for="oglen">ÖĞLEN NAMAZI</label>
+    </div>
+    
+    <div class="prayer-item">
+      <input type="checkbox" id="ikindi" name="prayers" value="ikindi">
+      <label for="ikindi">İKİNDİ NAMAZI</label>
+    </div>
+    
+    <div class="prayer-item">
+      <input type="checkbox" id="aksam" name="prayers" value="aksam">
+      <label for="aksam">AKŞAM NAMAZI</label>
+    </div>
+    
+    <div class="prayer-item">
+      <input type="checkbox" id="yatsi" name="prayers" value="yatsi">
+      <label for="yatsi">YATSI NAMAZI</label>
+    </div>
+
+    <div class="button-group">
+      <input id="evt-close" type="button" value="KAPAT"/>
+      <input id="evt-del" type="button" value="TEMİZLE"/>
+      <input id="evt-save" type="submit" value="KAYDET"/>
+    </div>
+  </form>
+</div>
+
+<script type="text/javascript">
+var cal = {
+  // (A) PROPERTIES
+  sMon : false,
+  mName : ["OCAK", "ŞUBAT", "MART", "NİSAN", "MAYIS", "HAZİRAN", "TEMMUZ", "AĞUSTOS", "EYLÜL", "EKİM", "KASIM", "ARALIK"],
+  prayers : ["sabah", "oglen", "ikindi", "aksam", "yatsi"],
+
+  // (A2) CALENDAR DATA
+  data : null,
+  sDay : 0, sMth : 0, sYear : 0,
+
+  // (A3) COMMON HTML ELEMENTS
+  hMth : null, hYear : null,
+  hForm : null, hfHead : null, hfDate : null, hfDel : null,
+
+  // (B) INIT CALENDAR
+  init : () => {
+    // (B1) GET + SET COMMON HTML ELEMENTS
+    cal.hMth = document.getElementById("cal-mth");
+    cal.hYear = document.getElementById("cal-yr");
+    cal.hForm = document.getElementById("cal-event");
+    cal.hfHead = document.getElementById("evt-head");
+    cal.hfDate = document.getElementById("evt-date");
+    cal.hfDel = document.getElementById("evt-del");
+    document.getElementById("evt-close").onclick = cal.close;
+    cal.hfDel.onclick = cal.del;
+    cal.hForm.onsubmit = cal.save;
+
+    // (B2) DATE NOW
+    let now = new Date(),
+        nowMth = now.getMonth(),
+        nowYear = parseInt(now.getFullYear());
+
+    // (B3) APPEND MONTHS SELECTOR
+    for (let i=0; i<12; i++) {
+      let opt = document.createElement("option");
+      opt.value = i;
+      opt.innerHTML = cal.mName[i];
+      if (i==nowMth) { opt.selected = true; }
+      cal.hMth.appendChild(opt);
+    }
+    cal.hMth.onchange = cal.list;
+
+    // (B4) APPEND YEARS SELECTOR
+    for (let i=nowYear-10; i<=nowYear+10; i++) {
+      let opt = document.createElement("option");
+      opt.value = i;
+      opt.innerHTML = i;
+      if (i==nowYear) { opt.selected = true; }
+      cal.hYear.appendChild(opt);
+    }
+    cal.hYear.onchange = cal.list;
+
+    // (B5) START - DRAW CALENDAR
+    cal.list();
+  },
+
+  // (C) DRAW CALENDAR FOR SELECTED MONTH
+  list : () => {
+    cal.sMth = parseInt(cal.hMth.value);
+    cal.sYear = parseInt(cal.hYear.value);
+    let daysInMth = new Date(cal.sYear, cal.sMth+1, 0).getDate(),
+        startDay = new Date(cal.sYear, cal.sMth, 1).getDay(),
+        endDay = new Date(cal.sYear, cal.sMth, daysInMth).getDay(),
+        now = new Date(),
+        nowMth = now.getMonth(),
+        nowYear = parseInt(now.getFullYear()),
+        nowDay = cal.sMth==nowMth && cal.sYear==nowYear ? now.getDate() : null ;
+
+    // (C2) LOAD DATA FROM LOCALSTORAGE
+    cal.data = localStorage.getItem("namaz-" + cal.sMth + "-" + cal.sYear);
+    if (cal.data==null) {
+      localStorage.setItem("namaz-" + cal.sMth + "-" + cal.sYear, "{}");
+      cal.data = {};
+    } else { cal.data = JSON.parse(cal.data); }
+
+    // (C3) DRAWING CALCULATIONS
+    let squares = [];
+    if (cal.sMon && startDay != 1) {
+      let blanks = startDay==0 ? 7 : startDay ;
+      for (let i=1; i<blanks; i++) { squares.push("b"); }
+    }
+    if (!cal.sMon && startDay != 0) {
+      for (let i=0; i<startDay; i++) { squares.push("b"); }
+    }
+
+    for (let i=1; i<=daysInMth; i++) { squares.push(i); }
+
+    if (cal.sMon && endDay != 0) {
+      let blanks = endDay==6 ? 1 : 7-endDay;
+      for (let i=0; i<blanks; i++) { squares.push("b"); }
+    }
+    if (!cal.sMon && endDay != 6) {
+      let blanks = endDay==0 ? 6 : 6-endDay;
+      for (let i=0; i<blanks; i++) { squares.push("b"); }
+    }
+
+    // (C4) DRAW HTML CALENDAR
+    let container = document.getElementById("cal-container"),
+    cTable = document.createElement("table");
+    cTable.id = "calendar";
+    container.innerHTML = "";
+    container.appendChild(cTable);
+
+    // First row - Day names
+    let cRow = document.createElement("tr"),
+        days = ["PAZARTESİ", "SALI", "ÇARŞAMBA", "PERŞEMBE", "CUMA", "CUMARTESİ", "PAZAR"];
+    if (!cal.sMon) { days.unshift(days.pop()); }
+    for (let d of days) {
+      let cCell = document.createElement("td");
+      cCell.innerHTML = d;
+      cRow.appendChild(cCell);
+    }
+    cRow.classList.add("head");
+    cTable.appendChild(cRow);
+
+    // Days in Month
+    let total = squares.length;
+    cRow = document.createElement("tr");
+    cRow.classList.add("day");
+    for (let i=0; i<total; i++) {
+      let cCell = document.createElement("td");
+      if (squares[i]=="b") { 
+        cCell.classList.add("blank"); 
+      } else {
+        if (nowDay==squares[i]) { cCell.classList.add("today"); }
+        cCell.innerHTML = `<div class="dd">${squares[i]}</div>`;
+        
+        // Check prayer status for this day
+        let dayData = cal.data[squares[i]];
+        if (dayData) {
+          let completedPrayers = cal.prayers.filter(prayer => dayData[prayer]).length;
+          if (completedPrayers === 5) {
+            cCell.classList.add("complete");
+            cCell.innerHTML += "<div class='evt'>5/5 ✓</div>";
+          } else if (completedPrayers > 0) {
+            cCell.classList.add("partial");
+            cCell.innerHTML += "<div class='evt'>" + completedPrayers + "/5</div>";
+          }
+        }
+        
+        cCell.onclick = () => { cal.show(cCell); };
+      }
+      cRow.appendChild(cCell);
+      if (i!=0 && (i+1)%7==0) {
+        cTable.appendChild(cRow);
+        cRow = document.createElement("tr");
+        cRow.classList.add("day");
+      }
+    }
+
+    // (C5) REMOVE ANY PREVIOUS FORM
+    cal.close();
+  },
+
+  // (D) SHOW PRAYER TRACKER FOR SELECTED DAY
+  show : (el) => {
+    cal.sDay = el.getElementsByClassName("dd")[0].innerHTML;
+    
+    // Update form
+    cal.hfDate.innerHTML = `${cal.sDay} ${cal.mName[cal.sMth]} ${cal.sYear}`;
+    
+    // Load existing data
+    let dayData = cal.data[cal.sDay] || {};
+    
+    // Set checkboxes
+    cal.prayers.forEach(prayer => {
+      document.getElementById(prayer).checked = dayData[prayer] || false;
+    });
+    
+    cal.hForm.classList.remove("ninja");
+  },
+
+  // (E) CLOSE FORM
+  close : () => {
+    cal.hForm.classList.add("ninja");
+  },
+
+  // (F) SAVE PRAYER DATA
+  save : () => {
+    if (!cal.data[cal.sDay]) {
+      cal.data[cal.sDay] = {};
+    }
+    
+    cal.prayers.forEach(prayer => {
+      cal.data[cal.sDay][prayer] = document.getElementById(prayer).checked;
+    });
+    
+    localStorage.setItem(`namaz-${cal.sMth}-${cal.sYear}`, JSON.stringify(cal.data));
+    cal.list();
+    cal.close();
+    return false;
+  },
+
+  // (G) CLEAR PRAYER DATA FOR SELECTED DATE
+  del : () => { 
+    if (confirm("Bu günün tüm namaz kayıtları temizlensin mi?")) {
+      delete cal.data[cal.sDay];
+      localStorage.setItem(`namaz-${cal.sMth}-${cal.sYear}`, JSON.stringify(cal.data));
+      cal.list();
+      cal.close();
+    }
+  }
+};
+
+// Data management functions
+function exportData() {
+  let allData = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    let key = localStorage.key(i);
+    if (key.startsWith("namaz-")) {
+      allData[key] = JSON.parse(localStorage.getItem(key));
+    }
+  }
+  
+  let dataStr = JSON.stringify(allData, null, 2);
+  let dataBlob = new Blob([dataStr], {type: 'application/json'});
+  let url = URL.createObjectURL(dataBlob);
+  let link = document.createElement('a');
+  link.href = url;
+  link.download = 'namaz-takip-' + new Date().toISOString().split('T')[0] + '.json';
+  link.click();
+  URL.revokeObjectURL(url);
+  
+  alert('Veriler başarıyla dışa aktarıldı!');
+}
+
+function importData(input) {
+  let file = input.files[0];
+  if (!file) return;
+  
+  let reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      let data = JSON.parse(e.target.result);
+      
+      // Clear existing data and import new data
+      Object.keys(data).forEach(key => {
+        if (key.startsWith("namaz-")) {
+          localStorage.setItem(key, JSON.stringify(data[key]));
+        }
+      });
+      
+      alert('Veriler başarıyla içe aktarıldı!');
+      cal.list(); // Refresh calendar
+    } catch (error) {
+      alert('Dosya formatı hatalı!');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function clearAllData() {
+  if (confirm('Tüm namaz kayıtları silinecek. Emin misiniz?')) {
+    if (confirm('Bu işlem geri alınamaz. Son kez onaylıyor musunuz?')) {
+      // Remove all namaz data from localStorage
+      let keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        let key = localStorage.key(i);
+        if (key.startsWith("namaz-")) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+      
+      alert('Tüm veriler temizlendi!');
+      cal.list(); // Refresh calendar
+    }
+  }
+}
+
+window.addEventListener("load", cal.init);
+</script>
+</body>
+</html>
