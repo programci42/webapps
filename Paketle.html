@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dosya Paketleyici</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-size: 14px;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background-color: #ffffff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px dashed #bdc3c7;
+            border-radius: 5px;
+            background-color: #ecf0f1;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        tbody tr:hover {
+            background-color: #e8f4f8;
+        }
+        .delete-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .delete-btn:hover {
+            background-color: #c0392b;
+        }
+        .action-buttons {
+            text-align: right;
+            margin-top: 20px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            color: white;
+        }
+        .btn-primary {
+            background-color: #2ecc71;
+        }
+        .btn-primary:hover {
+            background-color: #27ae60;
+        }
+        #status {
+            margin-top: 15px;
+            font-style: italic;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Dosya Paketleyici</h1>
+        
+        <div class="input-group">
+            <label for="folderInput">Paketlenecek Klasörü Seçin:</label>
+            <input type="file" id="folderInput" webkitdirectory directory multiple>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 50px; text-align: center;">SİL</th>
+                    <th style="width: 60px;">Sıra No</th>
+                    <th>Klasör Yolu</th>
+                    <th>Dosya Adı</th>
+                    <th style="width: 120px; text-align: right;">Boyutu</th>
+                </tr>
+            </thead>
+            <tbody id="fileListBody">
+                <!-- Dosyalar JavaScript ile buraya eklenecek -->
+            </tbody>
+        </table>
+
+        <div id="status">Lütfen bir klasör seçin. Seçim sonrası dosyalar otomatik listelenecektir.</div>
+
+        <div class="action-buttons">
+            <button id="packageBtn" class="btn btn-primary" disabled>PAKETLE</button>
+        </div>
+    </div>
+
+<script>
+    let fileList = [];
+    const folderInput = document.getElementById('folderInput');
+    const fileListBody = document.getElementById('fileListBody');
+    const packageBtn = document.getElementById('packageBtn');
+    const statusDiv = document.getElementById('status');
+
+    folderInput.addEventListener('change', function(event) {
+        const files = event.target.files;
+        fileList = [];
+        fileListBody.innerHTML = '';
+        packageBtn.disabled = true;
+
+        if (files.length === 0) {
+            statusDiv.textContent = 'Herhangi bir dosya seçilmedi.';
+            return;
+        }
+
+        statusDiv.textContent = `${files.length} dosya okunuyor, lütfen bekleyin...`;
+
+        let processedCount = 0;
+        for (const file of files) {
+            const reader = new FileReader();
+            const relativePath = file.webkitRelativePath;
+
+            reader.onload = function(e) {
+                fileList.push({
+                    name: file.name,
+                    path: relativePath,
+                    size: file.size,
+                    data: e.target.result
+                });
+                processedCount++;
+
+                if (processedCount === files.length) {
+                    populateTable();
+                    statusDiv.textContent = `${fileList.length} dosya hazır. Paketlemek için PAKETLE butonuna basın.`;
+                    packageBtn.disabled = false;
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    function populateTable() {
+        fileListBody.innerHTML = '';
+        fileList.forEach((file, index) => {
+            const row = document.createElement('tr');
+
+            const deleteCell = document.createElement('td');
+            deleteCell.style.textAlign = 'center';
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.textContent = 'X';
+            deleteBtn.onclick = () => deleteRow(index);
+            deleteCell.appendChild(deleteBtn);
+            row.appendChild(deleteCell);
+
+            const snoCell = document.createElement('td');
+            snoCell.textContent = index + 1;
+            row.appendChild(snoCell);
+
+            const pathCell = document.createElement('td');
+            pathCell.textContent = file.path.substring(0, file.path.lastIndexOf('/') + 1);
+            row.appendChild(pathCell);
+
+            const nameCell = document.createElement('td');
+            nameCell.textContent = file.name;
+            row.appendChild(nameCell);
+
+            const sizeCell = document.createElement('td');
+            sizeCell.style.textAlign = 'right';
+            sizeCell.textContent = formatFileSize(file.size);
+            row.appendChild(sizeCell);
+
+            fileListBody.appendChild(row);
+        });
+    }
+
+    function deleteRow(index) {
+        fileList.splice(index, 1);
+        populateTable();
+        statusDiv.textContent = `Bir dosya silindi. ${fileList.length} dosya kaldı.`;
+        if (fileList.length === 0) {
+            packageBtn.disabled = true;
+            statusDiv.textContent = 'Paketlenecek dosya kalmadı.';
+        }
+    }
+
+    packageBtn.addEventListener('click', function() {
+        if (fileList.length === 0) {
+            alert('Paketlenecek dosya yok!');
+            return;
+        }
+
+        const updateHtmlContent = generateUpdateHtml();
+
+        const blob = new Blob([updateHtmlContent], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'Guncelleme.html';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        statusDiv.textContent = `'Guncelleme.html' dosyası başarıyla oluşturulup indirildi.`;
+    });
+
+    function generateUpdateHtml() {
+        const embeddedData = JSON.stringify(fileList);
+
+        return `
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Dosya indirici</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></` +  `script>
+    <style>
+        body { font-family: sans-serif; background-color: #f4f7f6; padding: 20px; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #3498db; color: white; }
+        tbody tr:nth-child(even) { background-color: #f2f2f2; }
+        .btn { padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; color: white; }
+        .btn-download { background-color: #2ecc71; }
+        .btn-download:hover { background-color: #27ae60; }
+        .btn-zip { background-color: #e67e22; font-size: 16px; padding: 12px 25px;}
+        .btn-zip:hover { background-color: #d35400; }
+        .action-buttons { text-align: center; margin-top: 25px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Program için Güncelleme Paketi</h1>
+        <p>Aşağıdaki dosyaları tek tek veya hepsini ZIP olarak indirebilirsiniz.</p>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 80px; text-align: center;">İndir</th>
+                    <th>Sıra No</th>
+                    <th>Klasör Yolu</th>
+                    <th>Dosya Adı</th>
+                    <th style="text-align: right;">Boyutu</th>
+                </tr>
+            </thead>
+            <tbody id="fileListBody">
+                <!-- JavaScript ile doldurulacak -->
+            </tbody>
+        </table>
+        <div class="action-buttons">
+            <button id="downloadAllBtn" class="btn btn-zip">Tümünü İndir (ZIP)</button>
+        </div>
+    </div>
+    <script>
+        const fileData = ${embeddedData};
+
+        window.onload = function() {
+            const tableBody = document.getElementById('fileListBody');
+            fileData.forEach((file, index) => {
+                const row = tableBody.insertRow();
+                
+                const downloadCell = row.insertCell(0);
+                downloadCell.style.textAlign = 'center';
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'btn btn-download';
+                downloadBtn.textContent = 'İndir';
+                downloadBtn.onclick = () => downloadSingleFile(file.data, file.path);
+                downloadCell.appendChild(downloadBtn);
+
+                row.insertCell(1).textContent = index + 1;
+                row.insertCell(2).textContent = file.path.substring(0, file.path.lastIndexOf('/') + 1);
+                row.insertCell(3).textContent = file.name;
+                const sizeCell = row.insertCell(4);
+                sizeCell.style.textAlign = 'right';
+                sizeCell.textContent = formatFileSize(file.size);
+            });
+        };
+
+        document.getElementById('downloadAllBtn').onclick = function() {
+            if (fileData.length === 0) return;
+            
+            this.textContent = 'Hazırlanıyor...';
+            this.disabled = true;
+
+            const zip = new JSZip();
+
+            fileData.forEach(file => {
+                const base64Data = file.data.split(',')[1];
+                const binaryData = atob(base64Data);
+                const uint8Array = new Uint8Array(binaryData.length);
+                for (let i = 0; i < binaryData.length; i++) {
+                    uint8Array[i] = binaryData.charCodeAt(i);
+                }
+                zip.file(file.path, uint8Array);
+            });
+
+            zip.generateAsync({ type: "blob" })
+                .then(function(content) {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(content);
+                    link.download = 'Vizyon_Perde_Guncelleme.zip';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    document.getElementById('downloadAllBtn').textContent = 'Tümünü İndir (ZIP)';
+                    document.getElementById('downloadAllBtn').disabled = false;
+                });
+        };
+
+        function downloadSingleFile(dataURL, fileName) {
+            const link = document.createElement('a');
+            link.href = dataURL;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+    <` + `/script>
+</body>
+</html>`;
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+</script>
+
+</body>
+</html>
