@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Movie Maker - HTML5 Video Oluşturucu</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root{
+    --bg:#1e1f2b; --panel:#272838; --panel2:#2f3145; --line:#3a3c54;
+    --accent:#6c8cff; --accent2:#a06cff; --text:#e7e8f2; --muted:#9a9cb8;
+    --good:#39d98a; --warn:#ffb454; --danger:#ff6b6b;
+  }
+  html,body{ height:100%; }
+  body{
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;
+    background:var(--bg); color:var(--text); overflow:hidden;
+    display:flex; flex-direction:column; height:100vh;
+  }
+  /* Top bar */
+  .topbar{
+    height:54px; flex:0 0 54px; display:flex; align-items:center; gap:14px;
+    padding:0 16px; background:linear-gradient(90deg,#2a2c40,#272838);
+    border-bottom:1px solid var(--line);
+  }
+  .logo{ display:flex; align-items:center; gap:10px; font-weight:700; font-size:1.05rem; }
+  .logo i{ color:var(--accent); }
+  .logo small{ color:var(--muted); font-weight:500; font-size:.72rem; }
+  .topbar .spacer{ flex:1; }
+  .btn{
+    border:none; cursor:pointer; border-radius:9px; padding:9px 14px;
+    font-size:.85rem; font-weight:600; color:var(--text);
+    background:var(--panel2); transition:.15s; display:inline-flex; align-items:center; gap:7px;
+  }
+  .btn:hover{ filter:brightness(1.15); }
+  .btn:disabled{ opacity:.45; cursor:not-allowed; }
+  .btn.primary{ background:linear-gradient(135deg,var(--accent),var(--accent2)); }
+  .btn.good{ background:var(--good); color:#06281a; }
+  .btn.ghost{ background:transparent; border:1px solid var(--line); }
+  .btn.sm{ padding:6px 9px; font-size:.78rem; }
+
+  /* Main layout */
+  .main{ flex:1; display:flex; min-height:0; }
+  .col-left{ width:270px; flex:0 0 270px; background:var(--panel); border-right:1px solid var(--line); display:flex; flex-direction:column; min-height:0; }
+  .col-center{ flex:1; display:flex; flex-direction:column; min-width:0; }
+  .col-right{ width:280px; flex:0 0 280px; background:var(--panel); border-left:1px solid var(--line); display:flex; flex-direction:column; min-height:0; }
+
+  .panel-title{ padding:12px 14px; font-size:.78rem; text-transform:uppercase; letter-spacing:1px; color:var(--muted); font-weight:700; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:8px; }
+  .panel-title i{ color:var(--accent); }
+
+  /* Media bin */
+  .media-actions{ padding:10px; display:flex; flex-direction:column; gap:8px; border-bottom:1px solid var(--line); }
+  .media-list{ flex:1; overflow-y:auto; padding:10px; display:grid; grid-template-columns:1fr 1fr; gap:8px; align-content:start; }
+  .media-item{ position:relative; background:var(--panel2); border:1px solid var(--line); border-radius:8px; overflow:hidden; cursor:grab; aspect-ratio:16/10; }
+  .media-item img,.media-item video{ width:100%; height:100%; object-fit:cover; display:block; }
+  .media-item .ic{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:1.6rem; color:var(--muted); }
+  .media-item .tag{ position:absolute; top:4px; left:4px; background:rgba(0,0,0,.6); font-size:.6rem; padding:2px 5px; border-radius:5px; text-transform:uppercase; }
+  .media-item .add{ position:absolute; bottom:4px; right:4px; background:var(--accent); border:none; color:#fff; width:24px; height:24px; border-radius:6px; cursor:pointer; font-size:.8rem; }
+  .media-item .name{ position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,.55); font-size:.6rem; padding:2px 4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .empty-hint{ grid-column:1/-1; color:var(--muted); font-size:.8rem; text-align:center; padding:20px 8px; line-height:1.5; }
+
+  /* Preview */
+  .preview-wrap{ flex:1; display:flex; align-items:center; justify-content:center; background:#15161f; min-height:0; padding:14px; }
+  #stage{ background:#000; max-width:100%; max-height:100%; border-radius:8px; box-shadow:0 8px 40px rgba(0,0,0,.5); }
+  .transport{ flex:0 0 auto; background:var(--panel); border-top:1px solid var(--line); padding:10px 16px; display:flex; align-items:center; gap:14px; }
+  .transport .time{ font-variant-numeric:tabular-nums; font-size:.85rem; color:var(--muted); min-width:120px; }
+  .scrub{ flex:1; }
+  input[type=range]{ width:100%; accent-color:var(--accent); cursor:pointer; }
+  .icon-btn{ background:var(--panel2); border:1px solid var(--line); color:var(--text); width:40px; height:40px; border-radius:10px; cursor:pointer; font-size:1rem; }
+  .icon-btn:hover{ filter:brightness(1.2); }
+  .icon-btn.big{ width:48px; height:48px; background:linear-gradient(135deg,var(--accent),var(--accent2)); border:none; font-size:1.15rem; }
+
+  /* Right inspector */
+  .insp{ flex:1; overflow-y:auto; padding:14px; }
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:.72rem; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:.5px; }
+  .field input[type=text],.field textarea,.field select,.field input[type=number]{
+    width:100%; background:var(--panel2); border:1px solid var(--line); color:var(--text);
+    border-radius:8px; padding:9px 10px; font-size:.85rem; font-family:inherit;
+  }
+  .field textarea{ resize:vertical; min-height:60px; }
+  .field .row{ display:flex; gap:8px; align-items:center; }
+  .swatches{ display:flex; gap:6px; flex-wrap:wrap; }
+  .swatch{ width:24px; height:24px; border-radius:6px; border:2px solid transparent; cursor:pointer; }
+  .swatch.sel{ border-color:#fff; }
+  .no-sel{ color:var(--muted); font-size:.85rem; text-align:center; padding:30px 10px; line-height:1.6; }
+  .seg{ display:flex; background:var(--panel2); border-radius:8px; padding:3px; gap:3px; }
+  .seg button{ flex:1; border:none; background:transparent; color:var(--muted); padding:7px; border-radius:6px; cursor:pointer; font-size:.78rem; font-weight:600; }
+  .seg button.on{ background:var(--accent); color:#fff; }
+
+  /* Timeline */
+  .timeline{ flex:0 0 178px; background:var(--panel); border-top:1px solid var(--line); display:flex; flex-direction:column; }
+  .tl-head{ display:flex; align-items:center; gap:12px; padding:8px 14px; border-bottom:1px solid var(--line); }
+  .tl-head .lbl{ font-size:.78rem; text-transform:uppercase; letter-spacing:1px; color:var(--muted); font-weight:700; }
+  .tracks{ flex:1; overflow-x:auto; overflow-y:hidden; padding:10px; }
+  .track-row{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .track-ic{ width:30px; flex:0 0 30px; text-align:center; color:var(--muted); }
+  .clips{ display:flex; gap:6px; align-items:stretch; min-height:62px; }
+  .clip{ position:relative; min-width:70px; height:62px; border-radius:8px; overflow:hidden; cursor:pointer; border:2px solid transparent; background:var(--panel2); flex:0 0 auto; }
+  .clip.sel{ border-color:var(--accent); box-shadow:0 0 0 2px rgba(108,140,255,.3); }
+  .clip img,.clip video{ width:100%; height:100%; object-fit:cover; }
+  .clip .ci{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:1.2rem; }
+  .clip .dur{ position:absolute; bottom:2px; right:3px; font-size:.6rem; background:rgba(0,0,0,.65); padding:1px 4px; border-radius:4px; }
+  .clip .lbl{ position:absolute; top:2px; left:3px; font-size:.6rem; background:rgba(0,0,0,.55); padding:1px 4px; border-radius:4px; max-width:80%; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+  .clip .del{ position:absolute; top:2px; right:2px; width:18px; height:18px; border:none; border-radius:4px; background:rgba(0,0,0,.6); color:#fff; cursor:pointer; font-size:.6rem; opacity:0; transition:.15s; }
+  .clip:hover .del{ opacity:1; }
+  .audio-clip{ background:linear-gradient(135deg,#2c6e49,#1d4d34); display:flex; align-items:center; justify-content:center; flex-direction:column; gap:3px; color:#d8f5e6; font-size:.7rem; }
+  .tl-empty{ color:var(--muted); font-size:.85rem; padding:18px; }
+  .playhead-tl{ font-variant-numeric:tabular-nums; color:var(--muted); font-size:.78rem; }
+
+  /* Modal */
+  .modal-bg{ position:fixed; inset:0; background:rgba(0,0,0,.65); display:none; align-items:center; justify-content:center; z-index:50; }
+  .modal-bg.show{ display:flex; }
+  .modal{ background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:22px; width:420px; max-width:92vw; }
+  .modal h3{ margin-bottom:14px; display:flex; align-items:center; gap:9px; }
+  .prog-bar{ height:10px; background:var(--panel2); border-radius:6px; overflow:hidden; margin:14px 0; }
+  .prog-fill{ height:100%; width:0; background:linear-gradient(90deg,var(--accent),var(--accent2)); transition:.2s; }
+  .modal .muted{ color:var(--muted); font-size:.82rem; line-height:1.5; }
+  .toast{ position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--panel2); border:1px solid var(--line); padding:11px 18px; border-radius:10px; font-size:.85rem; z-index:60; opacity:0; transition:.3s; pointer-events:none; }
+  .toast.show{ opacity:1; }
+  ::-webkit-scrollbar{ width:9px; height:9px; }
+  ::-webkit-scrollbar-thumb{ background:var(--line); border-radius:5px; }
+  ::-webkit-scrollbar-track{ background:transparent; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="logo"><i class="fa-solid fa-film"></i> Movie Maker <small>HTML5 Video Stüdyosu</small></div>
+  <div class="spacer"></div>
+  <button class="btn ghost sm" id="aspectBtn"><i class="fa-solid fa-crop-simple"></i> 16:9</button>
+  <button class="btn ghost sm" id="newProjectBtn"><i class="fa-solid fa-file"></i> Yeni</button>
+  <button class="btn primary" id="exportBtn"><i class="fa-solid fa-download"></i> Videoyu Dışa Aktar</button>
+</div>
+
+<div class="main">
+  <!-- LEFT: MEDIA BIN -->
+  <div class="col-left">
+    <div class="panel-title"><i class="fa-solid fa-photo-film"></i> Medya Kütüphanesi</div>
+    <div class="media-actions">
+      <button class="btn primary sm" id="importBtn"><i class="fa-solid fa-upload"></i> Medya İçe Aktar</button>
+      <button class="btn ghost sm" id="addTitleBtn"><i class="fa-solid fa-font"></i> Başlık/Yazı Kartı Ekle</button>
+      <input type="file" id="fileInput" accept="image/*,video/*,audio/*" multiple hidden>
+    </div>
+    <div class="media-list" id="mediaList">
+      <div class="empty-hint">Görsel, video veya ses dosyalarını içe aktarın.<br>Ardından <b>+</b> ile zaman çizelgesine ekleyin.</div>
+    </div>
+  </div>
+
+  <!-- CENTER: PREVIEW + TIMELINE -->
+  <div class="col-center">
+    <div class="preview-wrap">
+      <canvas id="stage" width="1280" height="720"></canvas>
+    </div>
+    <div class="transport">
+      <button class="icon-btn" id="toStartBtn" title="Başa dön"><i class="fa-solid fa-backward-step"></i></button>
+      <button class="icon-btn big" id="playBtn" title="Oynat/Duraklat"><i class="fa-solid fa-play"></i></button>
+      <span class="time" id="timeLabel">0.0s / 0.0s</span>
+      <input type="range" class="scrub" id="scrub" min="0" max="1000" value="0">
+    </div>
+
+    <!-- TIMELINE -->
+    <div class="timeline">
+      <div class="tl-head">
+        <span class="lbl"><i class="fa-solid fa-bars-staggered"></i> Zaman Çizelgesi</span>
+        <span class="playhead-tl" id="tlTotal">Toplam: 0.0s</span>
+        <div class="spacer" style="flex:1"></div>
+        <button class="btn ghost sm" id="clearTlBtn"><i class="fa-solid fa-trash"></i> Temizle</button>
+      </div>
+      <div class="tracks">
+        <div class="track-row">
+          <div class="track-ic" title="Video parçası"><i class="fa-solid fa-film"></i></div>
+          <div class="clips" id="videoTrack"><div class="tl-empty">Sahne eklemek için soldaki medyalardan <b>+</b>'a basın.</div></div>
+        </div>
+        <div class="track-row">
+          <div class="track-ic" title="Ses parçası"><i class="fa-solid fa-music"></i></div>
+          <div class="clips" id="audioTrack"><div class="tl-empty">Arka plan müziği için ses dosyası ekleyin.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: INSPECTOR -->
+  <div class="col-right">
+    <div class="panel-title"><i class="fa-solid fa-sliders"></i> Özellikler</div>
+    <div class="insp" id="inspector">
+      <div class="no-sel">Düzenlemek için zaman çizelgesinden bir sahne seçin.</div>
+    </div>
+  </div>
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="modal-bg" id="exportModal">
+  <div class="modal">
+    <h3><i class="fa-solid fa-download"></i> Videoyu Dışa Aktar</h3>
+    <div id="exportSetup">
+      <div class="field">
+        <label>Dosya Formatı</label>
+        <div class="seg" id="formatSeg">
+          <button class="on" data-fmt="webm">WebM</button>
+          <button data-fmt="mp4">MP4</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Çözünürlük</label>
+        <select id="resSelect">
+          <option value="1280x720">720p (1280×720)</option>
+          <option value="1920x1080">1080p (1920×1080)</option>
+          <option value="854x480">480p (854×480)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Kalite (bit hızı)</label>
+        <select id="qualitySelect">
+          <option value="8000000">Yüksek</option>
+          <option value="5000000" selected>Orta</option>
+          <option value="2500000">Düşük</option>
+        </select>
+      </div>
+      <p class="muted" id="fmtNote"></p>
+      <div style="display:flex; gap:10px; margin-top:16px;">
+        <button class="btn ghost" id="exportCancel" style="flex:1">İptal</button>
+        <button class="btn good" id="exportStart" style="flex:2"><i class="fa-solid fa-circle-dot"></i> Kaydı Başlat</button>
+      </div>
+    </div>
+    <div id="exportProgress" style="display:none">
+      <p class="muted">Video gerçek zamanlı olarak işleniyor. Lütfen sekmeyi açık tutun…</p>
+      <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
+      <p class="muted" id="progText">Hazırlanıyor…</p>
+      <button class="btn ghost" id="exportStop" style="width:100%; margin-top:10px;">Durdur</button>
+    </div>
+    <div id="exportDone" style="display:none; text-align:center;">
+      <i class="fa-solid fa-circle-check" style="color:var(--good); font-size:2.4rem;"></i>
+      <h3 style="justify-content:center; margin-top:12px;">Video Hazır!</h3>
+      <p class="muted" id="doneInfo"></p>
+      <a id="downloadLink" class="btn good" style="width:100%; margin-top:14px; justify-content:center;" download><i class="fa-solid fa-download"></i> İndir</a>
+      <button class="btn ghost" id="exportClose" style="width:100%; margin-top:10px;">Kapat</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   Movie Maker — HTML5 video editör
+   - Medya kütüphanesi, zaman çizelgesi, canlı önizleme
+   - Canvas + MediaRecorder ile WebM/MP4 dışa aktarma
+   ============================================================ */
+
+const $ = s => document.querySelector(s);
+const stage = $('#stage');
+const ctx = stage.getContext('2d');
+
+// ---- Durum ----
+const state = {
+  media: [],          // {id,type,url,el,name,duration?}
+  clips: [],          // video track: {id,type,mediaId,duration,trimStart,text,...}
+  audio: null,        // {mediaId,el,volume}
+  selectedClip: null,
+  aspect: '16:9',
+  // oynatma
+  playing:false, time:0, _raf:null, _startWall:0, _startTime:0,
+  _activeVideoEl:null,
+};
+let mediaSeq=0, clipSeq=0;
+
+const ASPECTS = { '16:9':[1280,720], '9:16':[720,1280], '1:1':[900,900], '4:3':[960,720] };
+const TEXT_COLORS = ['#ffffff','#000000','#6c8cff','#39d98a','#ffb454','#ff6b6b','#a06cff'];
+const BG_COLORS   = ['#000000','#1e1f2b','#6c8cff','#a06cff','#39d98a','#ff6b6b','#ffb454','#ffffff'];
+
+// ============================================================
+//  MEDYA İÇE AKTARMA
+// ============================================================
+$('#importBtn').onclick = ()=> $('#fileInput').click();
+$('#fileInput').onchange = e => { [...e.target.files].forEach(addMediaFile); e.target.value=''; };
+
+function addMediaFile(file){
+  const url = URL.createObjectURL(file);
+  const type = file.type.startsWith('image') ? 'image'
+             : file.type.startsWith('video') ? 'video'
+             : file.type.startsWith('audio') ? 'audio' : null;
+  if(!type){ toast('Desteklenmeyen dosya türü'); return; }
+  const m = { id:++mediaSeq, type, url, name:file.name, el:null, duration:4 };
+
+  if(type==='image'){
+    const img=new Image(); img.src=url; img.onload=()=>renderMedia(); m.el=img;
+    state.media.push(m); renderMedia();
+  } else {
+    const el=document.createElement(type==='video'?'video':'audio');
+    el.src=url; el.preload='auto'; el.muted = (type==='video'); // ön izlemede video sesini kısık tut
+    el.onloadedmetadata=()=>{ m.duration = el.duration||4; renderMedia(); };
+    m.el=el; state.media.push(m); renderMedia();
+  }
+}
+
+$('#addTitleBtn').onclick = ()=>{
+  const id=++mediaSeq;
+  state.media.push({ id, type:'title', name:'Yazı Kartı', el:null, duration:3 });
+  renderMedia();
+  // doğrudan zaman çizelgesine de ekle
+  addClipFromMedia(id);
+};
+
+function renderMedia(){
+  const list=$('#mediaList');
+  if(state.media.length===0){
+    list.innerHTML='<div class="empty-hint">Görsel, video veya ses dosyalarını içe aktarın.<br>Ardından <b>+</b> ile zaman çizelgesine ekleyin.</div>';
+    return;
+  }
+  list.innerHTML='';
+  state.media.forEach(m=>{
+    const d=document.createElement('div'); d.className='media-item';
+    let inner='';
+    if(m.type==='image') inner=`<img src="${m.url}">`;
+    else if(m.type==='video') inner=`<video src="${m.url}" muted></video>`;
+    else if(m.type==='audio') inner=`<div class="ic"><i class="fa-solid fa-music"></i></div>`;
+    else if(m.type==='title') inner=`<div class="ic"><i class="fa-solid fa-font"></i></div>`;
+    d.innerHTML = inner +
+      `<span class="tag">${ {image:'Foto',video:'Video',audio:'Ses',title:'Yazı'}[m.type] }</span>`+
+      `<span class="name">${m.name}</span>`+
+      `<button class="add" title="Zaman çizelgesine ekle">+</button>`;
+    d.querySelector('.add').onclick = ()=> addClipFromMedia(m.id);
+    list.appendChild(d);
+  });
+}
+
+// ============================================================
+//  ZAMAN ÇİZELGESİ
+// ============================================================
+function addClipFromMedia(mediaId){
+  const m=state.media.find(x=>x.id===mediaId); if(!m) return;
+  if(m.type==='audio'){
+    state.audio = { mediaId, el:m.el, volume:1 };
+    toast('Arka plan müziği eklendi');
+    renderTimeline();
+    return;
+  }
+  const clip = {
+    id:++clipSeq, type:m.type, mediaId,
+    duration: m.type==='video' ? Math.min(m.duration||4, m.duration||4) : (m.type==='title'?3:4),
+    trimStart:0,
+    text: m.type==='title' ? 'Başlığınız' : '',
+    textColor:'#ffffff', textPos:'center', fontSize:64,
+    bgColor: m.type==='title' ? '#1e1f2b' : '#000000',
+    fit:'contain', filter:'none', fadeIn:false, fadeOut:false,
+    kenBurns: m.type==='image',
+  };
+  state.clips.push(clip);
+  selectClip(clip.id);
+  renderTimeline();
+  seek(0);
+}
+
+function totalDuration(){ return state.clips.reduce((s,c)=>s+c.duration,0); }
+
+function renderTimeline(){
+  const vt=$('#videoTrack'), at=$('#audioTrack');
+  // video parçası
+  if(state.clips.length===0){
+    vt.innerHTML='<div class="tl-empty">Sahne eklemek için soldaki medyalardan <b>+</b>\'a basın.</div>';
+  } else {
+    vt.innerHTML='';
+    state.clips.forEach(c=>{
+      const m=state.media.find(x=>x.id===c.mediaId);
+      const el=document.createElement('div');
+      el.className='clip'+(state.selectedClip===c.id?' sel':'');
+      el.style.width = Math.max(70, c.duration*22)+'px';
+      let thumb='';
+      if(c.type==='image' && m) thumb=`<img src="${m.url}">`;
+      else if(c.type==='video' && m) thumb=`<video src="${m.url}" muted></video>`;
+      else thumb=`<div class="ci" style="background:${c.bgColor}"><i class="fa-solid fa-font"></i></div>`;
+      el.innerHTML = thumb +
+        `<span class="lbl">${c.type==='title'?(c.text||'Yazı'):(m?m.name:'')}</span>`+
+        `<span class="dur">${c.duration.toFixed(1)}s</span>`+
+        `<button class="del"><i class="fa-solid fa-xmark"></i></button>`;
+      el.onclick = e=>{ if(e.target.closest('.del')) return; selectClip(c.id); };
+      el.querySelector('.del').onclick = e=>{ e.stopPropagation(); deleteClip(c.id); };
+      vt.appendChild(el);
+    });
+  }
+  // ses parçası
+  if(!state.audio){
+    at.innerHTML='<div class="tl-empty">Arka plan müziği için ses dosyası ekleyin.</div>';
+  } else {
+    const m=state.media.find(x=>x.id===state.audio.mediaId);
+    at.innerHTML='';
+    const el=document.createElement('div');
+    el.className='clip audio-clip';
+    el.style.width=Math.max(120, (m?.duration||totalDuration())*22)+'px';
+    el.innerHTML=`<i class="fa-solid fa-music"></i><span>${m?m.name:'Müzik'}</span><button class="del"><i class="fa-solid fa-xmark"></i></button>`;
+    el.querySelector('.del').onclick=()=>{ state.audio=null; renderTimeline(); };
+    at.appendChild(el);
+  }
+  $('#tlTotal').textContent='Toplam: '+totalDuration().toFixed(1)+'s';
+  updateTimeUI();
+}
+
+function deleteClip(id){
+  state.clips=state.clips.filter(c=>c.id!==id);
+  if(state.selectedClip===id){ state.selectedClip=null; renderInspector(); }
+  renderTimeline(); seek(Math.min(state.time, totalDuration()));
+}
+
+$('#clearTlBtn').onclick=()=>{
+  if(!state.clips.length && !state.audio) return;
+  state.clips=[]; state.audio=null; state.selectedClip=null;
+  renderInspector(); renderTimeline(); pause(); seek(0);
+};
+
+// ============================================================
+//  ÖZELLİKLER PANELİ (INSPECTOR)
+// ============================================================
+function selectClip(id){ state.selectedClip=id; renderTimeline(); renderInspector(); }
+
+function renderInspector(){
+  const box=$('#inspector');
+  const c=state.clips.find(x=>x.id===state.selectedClip);
+  if(!c){ box.innerHTML='<div class="no-sel">Düzenlemek için zaman çizelgesinden bir sahne seçin.</div>'; return; }
+  const m=state.media.find(x=>x.id===c.mediaId);
+  let html='';
+
+  // Süre
+  html+=`<div class="field"><label>Süre (saniye)</label>
+    <div class="row"><input type="range" id="f_dur" min="0.5" max="20" step="0.5" value="${c.duration}">
+    <span id="f_dur_v" style="min-width:42px;text-align:right">${c.duration.toFixed(1)}s</span></div></div>`;
+
+  // Başlık/yazı kartı metni (her sahne için metin katmanı)
+  html+=`<div class="field"><label>${c.type==='title'?'Yazı Kartı Metni':'Üst Yazı (boş bırakılabilir)'}</label>
+    <textarea id="f_text" placeholder="Metin...">${c.text||''}</textarea></div>`;
+
+  if(c.text || c.type==='title'){
+    html+=`<div class="field"><label>Yazı Konumu</label>
+      <div class="seg" id="f_pos">
+        <button data-v="top" class="${c.textPos==='top'?'on':''}">Üst</button>
+        <button data-v="center" class="${c.textPos==='center'?'on':''}">Orta</button>
+        <button data-v="bottom" class="${c.textPos==='bottom'?'on':''}">Alt</button>
+      </div></div>`;
+    html+=`<div class="field"><label>Yazı Boyutu</label>
+      <div class="row"><input type="range" id="f_fs" min="20" max="140" value="${c.fontSize}">
+      <span style="min-width:34px;text-align:right" id="f_fs_v">${c.fontSize}</span></div></div>`;
+    html+=`<div class="field"><label>Yazı Rengi</label><div class="swatches" id="f_tc">`+
+      TEXT_COLORS.map(col=>`<div class="swatch ${c.textColor===col?'sel':''}" data-c="${col}" style="background:${col}"></div>`).join('')+`</div></div>`;
+  }
+
+  if(c.type==='title'){
+    html+=`<div class="field"><label>Arka Plan Rengi</label><div class="swatches" id="f_bg">`+
+      BG_COLORS.map(col=>`<div class="swatch ${c.bgColor===col?'sel':''}" data-c="${col}" style="background:${col}"></div>`).join('')+`</div></div>`;
+  }
+
+  if(c.type==='image'||c.type==='video'){
+    html+=`<div class="field"><label>Sığdırma</label>
+      <div class="seg" id="f_fit">
+        <button data-v="contain" class="${c.fit==='contain'?'on':''}">Sığdır</button>
+        <button data-v="cover" class="${c.fit==='cover'?'on':''}">Doldur</button>
+      </div></div>`;
+    html+=`<div class="field"><label>Filtre</label>
+      <select id="f_filter">
+        ${['none','grayscale','sepia','bright','contrast','blur','vintage'].map(f=>`<option value="${f}" ${c.filter===f?'selected':''}>${ {none:'Yok',grayscale:'Siyah-Beyaz',sepia:'Sepya',bright:'Parlak',contrast:'Kontrast',blur:'Bulanık',vintage:'Vintage'}[f] }</option>`).join('')}
+      </select></div>`;
+    if(c.type==='image')
+      html+=`<div class="field"><label class="row" style="text-transform:none"><input type="checkbox" id="f_kb" ${c.kenBurns?'checked':''} style="width:auto;margin-right:8px"> Yavaş yakınlaşma (Ken Burns)</label></div>`;
+  }
+
+  // Geçişler
+  html+=`<div class="field"><label>Geçiş Efekti</label>
+    <div class="row" style="gap:14px">
+      <label style="text-transform:none;color:var(--text)"><input type="checkbox" id="f_fi" ${c.fadeIn?'checked':''} style="width:auto;margin-right:6px">Açılış</label>
+      <label style="text-transform:none;color:var(--text)"><input type="checkbox" id="f_fo" ${c.fadeOut?'checked':''} style="width:auto;margin-right:6px">Kapanış</label>
+    </div></div>`;
+
+  if(c.type==='video'){
+    html+=`<div class="field"><label>Kırpma Başlangıcı (s)</label>
+      <input type="number" id="f_trim" min="0" max="${(m?.duration||0).toFixed(1)}" step="0.5" value="${c.trimStart}"></div>`;
+  }
+
+  box.innerHTML=html;
+  wireInspector(c);
+}
+
+function wireInspector(c){
+  const on=(id,ev,fn)=>{ const e=$('#'+id); if(e) e.addEventListener(ev,fn); };
+  on('f_dur','input',e=>{ c.duration=+e.target.value; $('#f_dur_v').textContent=c.duration.toFixed(1)+'s'; renderTimeline(); seek(state.time); });
+  on('f_text','input',e=>{ c.text=e.target.value; renderTimeline(); seek(state.time); });
+  on('f_fs','input',e=>{ c.fontSize=+e.target.value; $('#f_fs_v').textContent=c.fontSize; seek(state.time); });
+  on('f_filter','change',e=>{ c.filter=e.target.value; seek(state.time); });
+  on('f_kb','change',e=>{ c.kenBurns=e.target.checked; seek(state.time); });
+  on('f_fi','change',e=>{ c.fadeIn=e.target.checked; });
+  on('f_fo','change',e=>{ c.fadeOut=e.target.checked; });
+  on('f_trim','input',e=>{ c.trimStart=+e.target.value; seek(state.time); });
+  const seg=(id,fn)=>{ const wrap=$('#'+id); if(!wrap)return; wrap.querySelectorAll('button').forEach(b=>b.onclick=()=>{ wrap.querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); fn(b.dataset.v); seek(state.time); }); };
+  seg('f_pos',v=>c.textPos=v); seg('f_fit',v=>c.fit=v);
+  const sw=(id,fn)=>{ const wrap=$('#'+id); if(!wrap)return; wrap.querySelectorAll('.swatch').forEach(s=>s.onclick=()=>{ wrap.querySelectorAll('.swatch').forEach(x=>x.classList.remove('sel')); s.classList.add('sel'); fn(s.dataset.c); renderTimeline(); seek(state.time); }); };
+  sw('f_tc',v=>c.textColor=v); sw('f_bg',v=>c.bgColor=v);
+}
+
+// ============================================================
+//  RENDER ENGINE — belirli bir zamanı canvas'a çiz
+// ============================================================
+function clipAtTime(t){
+  let acc=0;
+  for(const c of state.clips){
+    if(t < acc+c.duration || c===state.clips[state.clips.length-1])
+      return { clip:c, local:Math.max(0,Math.min(c.duration, t-acc)), start:acc };
+    acc+=c.duration;
+  }
+  return null;
+}
+
+const FILTERS = {
+  none:'none', grayscale:'grayscale(1)', sepia:'sepia(0.85)',
+  bright:'brightness(1.3) saturate(1.1)', contrast:'contrast(1.4)',
+  blur:'blur(4px)', vintage:'sepia(0.4) contrast(1.1) saturate(1.3) brightness(1.05)'
+};
+
+function drawClip(c, local){
+  const W=stage.width, H=stage.height;
+  ctx.clearRect(0,0,W,H);
+  // arka plan
+  ctx.fillStyle = c.bgColor||'#000';
+  ctx.fillRect(0,0,W,H);
+
+  const m=state.media.find(x=>x.id===c.mediaId);
+  ctx.filter = FILTERS[c.filter]||'none';
+
+  if(c.type==='image' && m?.el?.complete){
+    drawMediaFit(m.el, c, local);
+  } else if(c.type==='video' && m?.el){
+    if(m.el.readyState>=2) drawMediaFit(m.el, c, local);
+  }
+  ctx.filter='none';
+
+  // metin katmanı
+  if(c.text){
+    drawText(c);
+  }
+
+  // fade geçişleri
+  let alpha=1;
+  const fd=Math.min(0.6, c.duration/2);
+  if(c.fadeIn && local<fd) alpha=local/fd;
+  if(c.fadeOut && local>c.duration-fd) alpha=Math.min(alpha,(c.duration-local)/fd);
+  if(alpha<1){
+    ctx.fillStyle='rgba(0,0,0,'+(1-alpha)+')';
+    ctx.fillRect(0,0,W,H);
+  }
+}
+
+function drawMediaFit(el, c, local){
+  const W=stage.width,H=stage.height;
+  const mw = el.videoWidth||el.naturalWidth||el.width;
+  const mh = el.videoHeight||el.naturalHeight||el.height;
+  if(!mw||!mh) return;
+  let scale = c.fit==='cover' ? Math.max(W/mw,H/mh) : Math.min(W/mw,H/mh);
+  // Ken Burns: zamanla %8 yakınlaş
+  if(c.kenBurns && c.type==='image'){
+    const p = c.duration? local/c.duration : 0;
+    scale *= (1 + 0.08*p);
+  }
+  const dw=mw*scale, dh=mh*scale;
+  ctx.drawImage(el, (W-dw)/2, (H-dh)/2, dw, dh);
+}
+
+function drawText(c){
+  const W=stage.width,H=stage.height;
+  const fs = c.fontSize * (W/1280);
+  ctx.font=`700 ${fs}px Inter, Segoe UI, sans-serif`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  const lines=(c.text||'').split('\n');
+  const lh=fs*1.2;
+  let y = c.textPos==='top'? H*0.16 : c.textPos==='bottom'? H*0.84 - (lines.length-1)*lh : H/2;
+  lines.forEach((ln,i)=>{
+    const yy=y+i*lh;
+    ctx.lineWidth=fs*0.12; ctx.strokeStyle='rgba(0,0,0,.55)';
+    ctx.lineJoin='round'; ctx.strokeText(ln, W/2, yy);
+    ctx.fillStyle=c.textColor||'#fff'; ctx.fillText(ln, W/2, yy);
+  });
+}
+
+function renderFrame(){
+  const at=clipAtTime(state.time);
+  if(!at){ ctx.clearRect(0,0,stage.width,stage.height); ctx.fillStyle='#000'; ctx.fillRect(0,0,stage.width,stage.height); return; }
+  // video elemanını senkronla
+  syncVideoForClip(at.clip, at.local);
+  drawClip(at.clip, at.local);
+}
+
+function syncVideoForClip(c, local){
+  if(c.type!=='video'){ stopActiveVideo(); return; }
+  const m=state.media.find(x=>x.id===c.mediaId); if(!m?.el) return;
+  const target=c.trimStart+local;
+  if(state._activeVideoEl && state._activeVideoEl!==m.el) stopActiveVideo();
+  state._activeVideoEl=m.el;
+  if(state.playing){
+    if(m.el.paused) m.el.play().catch(()=>{});
+    if(Math.abs(m.el.currentTime-target)>0.35) m.el.currentTime=target;
+  } else {
+    m.el.pause(); m.el.currentTime=target;
+  }
+}
+function stopActiveVideo(){ if(state._activeVideoEl){ state._activeVideoEl.pause(); state._activeVideoEl=null; } }
+
+// ============================================================
+//  OYNATMA
+// ============================================================
+$('#playBtn').onclick=()=> state.playing? pause():play();
+$('#toStartBtn').onclick=()=>{ seek(0); };
+
+function play(){
+  if(!state.clips.length) return;
+  if(state.time>=totalDuration()-0.05) state.time=0;
+  state.playing=true;
+  $('#playBtn').innerHTML='<i class="fa-solid fa-pause"></i>';
+  state._startWall=performance.now(); state._startTime=state.time;
+  // arka plan müziği
+  if(state.audio?.el){ state.audio.el.muted=false; state.audio.el.currentTime=Math.min(state.time, state.audio.el.duration||state.time); state.audio.el.play().catch(()=>{}); }
+  loop();
+}
+function pause(){
+  state.playing=false;
+  $('#playBtn').innerHTML='<i class="fa-solid fa-play"></i>';
+  cancelAnimationFrame(state._raf);
+  stopActiveVideo();
+  if(state.audio?.el) state.audio.el.pause();
+}
+function loop(){
+  if(!state.playing) return;
+  const elapsed=(performance.now()-state._startWall)/1000;
+  state.time=state._startTime+elapsed;
+  const total=totalDuration();
+  if(state.time>=total){ state.time=total; renderFrame(); updateTimeUI(); pause(); return; }
+  renderFrame(); updateTimeUI();
+  state._raf=requestAnimationFrame(loop);
+}
+function seek(t){
+  state.time=Math.max(0,Math.min(t, totalDuration()));
+  if(state.playing){ state._startWall=performance.now(); state._startTime=state.time; }
+  renderFrame(); updateTimeUI();
+}
+function updateTimeUI(){
+  const total=totalDuration();
+  $('#timeLabel').textContent=state.time.toFixed(1)+'s / '+total.toFixed(1)+'s';
+  $('#scrub').value = total? (state.time/total*1000) : 0;
+}
+$('#scrub').oninput=e=>{ const total=totalDuration(); seek(total*e.target.value/1000); };
+
+// ============================================================
+//  EN-BOY ORANI
+// ============================================================
+$('#aspectBtn').onclick=()=>{
+  const keys=Object.keys(ASPECTS);
+  const i=(keys.indexOf(state.aspect)+1)%keys.length;
+  state.aspect=keys[i];
+  $('#aspectBtn').innerHTML='<i class="fa-solid fa-crop-simple"></i> '+state.aspect;
+  applyAspect(); renderFrame();
+};
+function applyAspect(){
+  const [w,h]=ASPECTS[state.aspect];
+  stage.width=w; stage.height=h;
+  // CSS boyutu sığdır
+  const wrap=$('.preview-wrap'); const maxW=wrap.clientWidth-28, maxH=wrap.clientHeight-28;
+  const sc=Math.min(maxW/w, maxH/h);
+  stage.style.width=(w*sc)+'px'; stage.style.height=(h*sc)+'px';
+}
+window.addEventListener('resize',()=>{ applyAspect(); renderFrame(); });
+
+// ============================================================
+//  YENİ PROJE
+// ============================================================
+$('#newProjectBtn').onclick=()=>{
+  if(state.clips.length && !confirm('Yeni projeye başlansın mı? Mevcut çalışma silinecek.')) return;
+  pause();
+  state.media=[]; state.clips=[]; state.audio=null; state.selectedClip=null; state.time=0;
+  renderMedia(); renderTimeline(); renderInspector(); seek(0);
+};
+
+// ============================================================
+//  DIŞA AKTARMA (WebM / MP4)
+// ============================================================
+const exportModal=$('#exportModal');
+let exportFmt='webm', recorder=null, recChunks=[], exportStopFlag=false;
+
+$('#exportBtn').onclick=()=>{
+  if(!state.clips.length){ toast('Önce zaman çizelgesine sahne ekleyin'); return; }
+  showExportSetup(); exportModal.classList.add('show');
+};
+$('#exportCancel').onclick=()=> exportModal.classList.remove('show');
+$('#exportClose').onclick=()=> exportModal.classList.remove('show');
+
+$('#formatSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  $('#formatSeg').querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); exportFmt=b.dataset.fmt; updateFmtNote();
+});
+
+function pickMime(fmt){
+  const cands = fmt==='mp4'
+    ? ['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4;codecs=avc1','video/mp4']
+    : ['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
+  for(const c of cands){ if(MediaRecorder.isTypeSupported(c)) return c; }
+  return null;
+}
+function updateFmtNote(){
+  const note=$('#fmtNote');
+  if(exportFmt==='mp4'){
+    const mime=pickMime('mp4');
+    note.innerHTML = mime
+      ? '✅ Tarayıcınız MP4 kaydını destekliyor.'
+      : '⚠️ Tarayıcınız doğrudan MP4 kaydını desteklemiyor. WebM olarak kaydedilip <b>.mp4</b> uzantısıyla verilecek (çoğu oynatıcı açar). En iyi MP4 desteği için Chrome 130+ veya Safari kullanın.';
+  } else {
+    note.innerHTML='✅ WebM tüm modern tarayıcılarda desteklenir.';
+  }
+}
+
+function showExportSetup(){
+  $('#exportSetup').style.display=''; $('#exportProgress').style.display='none'; $('#exportDone').style.display='none';
+  updateFmtNote();
+}
+
+$('#exportStart').onclick=startExport;
+$('#exportStop').onclick=()=>{ exportStopFlag=true; };
+
+async function startExport(){
+  pause();
+  const [rw,rh]=$('#resSelect').value.split('x').map(Number);
+  const bitrate=+$('#qualitySelect').value;
+
+  // dışa aktarma için ayrı canvas (seçili çözünürlük)
+  const canvas=document.createElement('canvas'); canvas.width=rw; canvas.height=rh;
+  const ec=canvas.getContext('2d');
+
+  // ses grafiği
+  let audioStreamTracks=[];
+  let actx=null;
+  try{
+    actx=new (window.AudioContext||window.webkitAudioContext)();
+    const dest=actx.createMediaStreamDestination();
+    let hasAudio=false;
+    // arka plan müziği
+    if(state.audio?.el){
+      try{ const src=actx.createMediaElementSource(state.audio.el); src.connect(dest); hasAudio=true; }catch(_){}
+    }
+    // video kliplerinin sesi
+    for(const c of state.clips){
+      if(c.type==='video'){
+        const m=state.media.find(x=>x.id===c.mediaId);
+        if(m?.el && !m._audioWired){
+          try{ const src=actx.createMediaElementSource(m.el); src.connect(dest); m._audioWired=true; hasAudio=true; m.el.muted=false; }catch(_){}
+        } else if(m?._audioWired){ hasAudio=true; m.el.muted=false; }
+      }
+    }
+    if(hasAudio) audioStreamTracks=dest.stream.getAudioTracks();
+  }catch(e){ console.warn('Ses grafiği kurulamadı',e); }
+
+  const vstream=canvas.captureStream(30);
+  const tracks=[...vstream.getVideoTracks(), ...audioStreamTracks];
+  const stream=new MediaStream(tracks);
+
+  const mime=pickMime(exportFmt) || pickMime('webm') || 'video/webm';
+  const actualIsMp4 = mime.startsWith('video/mp4');
+  try{
+    recorder=new MediaRecorder(stream,{ mimeType:mime, videoBitsPerSecond:bitrate });
+  }catch(e){ recorder=new MediaRecorder(stream); }
+
+  recChunks=[];
+  recorder.ondataavailable=e=>{ if(e.data.size) recChunks.push(e.data); };
+
+  // UI -> ilerleme
+  $('#exportSetup').style.display='none'; $('#exportProgress').style.display='';
+  exportStopFlag=false;
+
+  const total=totalDuration();
+  recorder.start(100);
+  if(actx && actx.state==='suspended') await actx.resume();
+
+  // gerçek zamanlı render döngüsü
+  const startWall=performance.now();
+  // arka plan müziği başlat
+  if(state.audio?.el){ try{ state.audio.el.currentTime=0; state.audio.el.muted=false; await state.audio.el.play(); }catch(_){} }
+
+  await new Promise(resolve=>{
+    function step(){
+      const t=(performance.now()-startWall)/1000;
+      if(t>=total || exportStopFlag){ resolve(); return; }
+      renderExportFrame(ec, canvas, t);
+      $('#progFill').style.width=Math.min(100,t/total*100)+'%';
+      $('#progText').textContent=`İşleniyor: ${t.toFixed(1)}s / ${total.toFixed(1)}s`;
+      requestAnimationFrame(step);
+    }
+    step();
+  });
+
+  recorder.stop();
+  // müzik/video durdur
+  if(state.audio?.el) state.audio.el.pause();
+  state.clips.forEach(c=>{ const m=state.media.find(x=>x.id===c.mediaId); if(m?.el?.pause) m.el.pause(); });
+
+  await new Promise(res=> recorder.onstop=res);
+  if(actx) actx.close().catch(()=>{});
+
+  const blob=new Blob(recChunks,{ type:mime });
+  const url=URL.createObjectURL(blob);
+  const ext = (actualIsMp4 || exportFmt==='mp4') ? 'mp4' : 'webm';
+  // Kullanıcı mp4 istedi ama tarayıcı webm üretti -> uzantı mp4, içerik webm
+  const link=$('#downloadLink');
+  link.href=url; link.download=`film_${Date.now()}.${exportFmt==='mp4'?'mp4':'webm'}`;
+  $('#exportProgress').style.display='none'; $('#exportDone').style.display='';
+  const sizeMB=(blob.size/1048576).toFixed(1);
+  let info=`Süre: ${total.toFixed(1)}s • Boyut: ${sizeMB} MB • ${$('#resSelect').value}`;
+  if(exportFmt==='mp4' && !actualIsMp4) info+='<br><span style="color:var(--warn)">Not: Tarayıcı gerçek MP4 üretemediği için içerik WebM olarak kodlandı (.mp4 uzantısıyla).</span>';
+  $('#doneInfo').innerHTML=info;
+  toast('Video hazır!');
+}
+
+// Dışa aktarma karesini hedef canvas'a çiz (ana stage'den bağımsız ölçek)
+function renderExportFrame(ec, canvas, t){
+  const W=canvas.width,H=canvas.height;
+  const at=clipAtTime(t);
+  ec.clearRect(0,0,W,H); ec.fillStyle='#000'; ec.fillRect(0,0,W,H);
+  if(!at) return;
+  const c=at.clip, local=at.local;
+  ec.fillStyle=c.bgColor||'#000'; ec.fillRect(0,0,W,H);
+  const m=state.media.find(x=>x.id===c.mediaId);
+  ec.filter=FILTERS[c.filter]||'none';
+  // video senkron
+  if(c.type==='video' && m?.el){
+    const target=c.trimStart+local;
+    if(m.el.paused) m.el.play().catch(()=>{});
+    if(Math.abs(m.el.currentTime-target)>0.4) m.el.currentTime=target;
+    if(m.el.readyState>=2) drawFitOn(ec,W,H,m.el,c,local);
+  } else if(c.type==='image' && m?.el?.complete){
+    drawFitOn(ec,W,H,m.el,c,local);
+  } else {
+    // diğer videoları durdur
+  }
+  ec.filter='none';
+  if(c.text) drawTextOn(ec,W,H,c);
+  // fade
+  const fd=Math.min(0.6,c.duration/2); let a=1;
+  if(c.fadeIn && local<fd) a=local/fd;
+  if(c.fadeOut && local>c.duration-fd) a=Math.min(a,(c.duration-local)/fd);
+  if(a<1){ ec.fillStyle='rgba(0,0,0,'+(1-a)+')'; ec.fillRect(0,0,W,H); }
+}
+function drawFitOn(ec,W,H,el,c,local){
+  const mw=el.videoWidth||el.naturalWidth, mh=el.videoHeight||el.naturalHeight;
+  if(!mw||!mh) return;
+  let scale=c.fit==='cover'?Math.max(W/mw,H/mh):Math.min(W/mw,H/mh);
+  if(c.kenBurns&&c.type==='image'){ const p=c.duration?local/c.duration:0; scale*=(1+0.08*p); }
+  const dw=mw*scale,dh=mh*scale;
+  ec.drawImage(el,(W-dw)/2,(H-dh)/2,dw,dh);
+}
+function drawTextOn(ec,W,H,c){
+  const fs=c.fontSize*(W/1280);
+  ec.font=`700 ${fs}px Inter, Segoe UI, sans-serif`;
+  ec.textAlign='center'; ec.textBaseline='middle';
+  const lines=(c.text||'').split('\n'); const lh=fs*1.2;
+  let y=c.textPos==='top'?H*0.16:c.textPos==='bottom'?H*0.84-(lines.length-1)*lh:H/2;
+  lines.forEach((ln,i)=>{ const yy=y+i*lh;
+    ec.lineWidth=fs*0.12; ec.strokeStyle='rgba(0,0,0,.55)'; ec.lineJoin='round'; ec.strokeText(ln,W/2,yy);
+    ec.fillStyle=c.textColor||'#fff'; ec.fillText(ln,W/2,yy);
+  });
+}
+
+// ============================================================
+//  YARDIMCI
+// ============================================================
+let toastT=null;
+function toast(msg){
+  const el=$('#toast'); el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('show'),2200);
+}
+
+// Klavye kısayolları
+window.addEventListener('keydown',e=>{
+  if(e.target.matches('input,textarea,select')) return;
+  if(e.code==='Space'){ e.preventDefault(); state.playing?pause():play(); }
+  if(e.code==='Delete'&&state.selectedClip) deleteClip(state.selectedClip);
+});
+
+// Başlat
+applyAspect();
+renderFrame();
+ctx.fillStyle='#666'; ctx.font='28px Inter,sans-serif'; ctx.textAlign='center';
+ctx.fillText('🎬 Medya ekleyip sahneleri zaman çizelgesine dizin', stage.width/2, stage.height/2);
+</script>
+</body>
+</html>
