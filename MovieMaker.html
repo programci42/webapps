@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Movie Maker - HTML5 Video Oluşturucu</title>
+<title>Movie Maker - HTML5 Video Studio</title>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
@@ -18,20 +18,22 @@
     background:var(--bg); color:var(--text); overflow:hidden;
     display:flex; flex-direction:column; height:100vh;
   }
+  body[dir=rtl] .col-left{ border-right:none; border-left:1px solid var(--line); }
+  body[dir=rtl] .col-right{ border-left:none; border-right:1px solid var(--line); }
   /* Top bar */
   .topbar{
-    height:54px; flex:0 0 54px; display:flex; align-items:center; gap:14px;
+    height:54px; flex:0 0 54px; display:flex; align-items:center; gap:10px;
     padding:0 16px; background:linear-gradient(90deg,#2a2c40,#272838);
     border-bottom:1px solid var(--line);
   }
-  .logo{ display:flex; align-items:center; gap:10px; font-weight:700; font-size:1.05rem; }
+  .logo{ display:flex; align-items:center; gap:10px; font-weight:700; font-size:1.05rem; white-space:nowrap; }
   .logo i{ color:var(--accent); }
   .logo small{ color:var(--muted); font-weight:500; font-size:.72rem; }
   .topbar .spacer{ flex:1; }
   .btn{
     border:none; cursor:pointer; border-radius:9px; padding:9px 14px;
     font-size:.85rem; font-weight:600; color:var(--text);
-    background:var(--panel2); transition:.15s; display:inline-flex; align-items:center; gap:7px;
+    background:var(--panel2); transition:.15s; display:inline-flex; align-items:center; gap:7px; white-space:nowrap;
   }
   .btn:hover{ filter:brightness(1.15); }
   .btn:disabled{ opacity:.45; cursor:not-allowed; }
@@ -39,25 +41,36 @@
   .btn.good{ background:var(--good); color:#06281a; }
   .btn.ghost{ background:transparent; border:1px solid var(--line); }
   .btn.sm{ padding:6px 9px; font-size:.78rem; }
+  .lang-sel{ background:var(--panel2); border:1px solid var(--line); color:var(--text); border-radius:8px; padding:7px 9px; font-size:.82rem; cursor:pointer; font-family:inherit; }
 
   /* Main layout */
   .main{ flex:1; display:flex; min-height:0; }
   .col-left{ width:270px; flex:0 0 270px; background:var(--panel); border-right:1px solid var(--line); display:flex; flex-direction:column; min-height:0; }
   .col-center{ flex:1; display:flex; flex-direction:column; min-width:0; }
-  .col-right{ width:280px; flex:0 0 280px; background:var(--panel); border-left:1px solid var(--line); display:flex; flex-direction:column; min-height:0; }
+  .col-right{ width:285px; flex:0 0 285px; background:var(--panel); border-left:1px solid var(--line); display:flex; flex-direction:column; min-height:0; }
 
   .panel-title{ padding:12px 14px; font-size:.78rem; text-transform:uppercase; letter-spacing:1px; color:var(--muted); font-weight:700; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:8px; }
   .panel-title i{ color:var(--accent); }
 
   /* Media bin */
   .media-actions{ padding:10px; display:flex; flex-direction:column; gap:8px; border-bottom:1px solid var(--line); }
+  .tabs{ display:flex; gap:4px; padding:8px 10px 0; }
+  .tabs button{ flex:1; border:none; background:var(--panel2); color:var(--muted); padding:9px; border-radius:8px 8px 0 0; cursor:pointer; font-size:.8rem; font-weight:600; display:flex; align-items:center; justify-content:center; gap:6px; }
+  .tabs button.on{ background:var(--accent); color:#fff; }
   .media-list{ flex:1; overflow-y:auto; padding:10px; display:grid; grid-template-columns:1fr 1fr; gap:8px; align-content:start; }
-  .media-item{ position:relative; background:var(--panel2); border:1px solid var(--line); border-radius:8px; overflow:hidden; cursor:grab; aspect-ratio:16/10; }
+  .media-list[hidden]{ display:none; }
+  .media-item{ position:relative; background:var(--panel2); border:1px solid var(--line); border-radius:8px; overflow:hidden; cursor:pointer; aspect-ratio:16/10; }
   .media-item img,.media-item video{ width:100%; height:100%; object-fit:cover; display:block; }
   .media-item .ic{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:1.6rem; color:var(--muted); }
   .media-item .tag{ position:absolute; top:4px; left:4px; background:rgba(0,0,0,.6); font-size:.6rem; padding:2px 5px; border-radius:5px; text-transform:uppercase; }
   .media-item .add{ position:absolute; bottom:4px; right:4px; background:var(--accent); border:none; color:#fff; width:24px; height:24px; border-radius:6px; cursor:pointer; font-size:.8rem; }
+  .media-item .rm{ position:absolute; top:4px; right:4px; background:rgba(0,0,0,.6); border:none; color:#fff; width:20px; height:20px; border-radius:5px; cursor:pointer; font-size:.65rem; opacity:0; transition:.15s; }
+  .media-item:hover .rm{ opacity:1; }
   .media-item .name{ position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,.55); font-size:.6rem; padding:2px 4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .audio-item{ aspect-ratio:auto; height:54px; display:flex; align-items:center; gap:8px; padding:8px; cursor:default; }
+  .audio-item .ic{ position:static; font-size:1.1rem; color:var(--good); width:auto; }
+  .audio-item .an{ flex:1; font-size:.72rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .audio-item .add{ position:static; }
   .empty-hint{ grid-column:1/-1; color:var(--muted); font-size:.8rem; text-align:center; padding:20px 8px; line-height:1.5; }
 
   /* Preview */
@@ -90,22 +103,31 @@
   .seg button.on{ background:var(--accent); color:#fff; }
 
   /* Timeline */
-  .timeline{ flex:0 0 178px; background:var(--panel); border-top:1px solid var(--line); display:flex; flex-direction:column; }
+  .timeline{ flex:0 0 186px; background:var(--panel); border-top:1px solid var(--line); display:flex; flex-direction:column; }
   .tl-head{ display:flex; align-items:center; gap:12px; padding:8px 14px; border-bottom:1px solid var(--line); }
   .tl-head .lbl{ font-size:.78rem; text-transform:uppercase; letter-spacing:1px; color:var(--muted); font-weight:700; }
   .tracks{ flex:1; overflow-x:auto; overflow-y:hidden; padding:10px; }
   .track-row{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
   .track-ic{ width:30px; flex:0 0 30px; text-align:center; color:var(--muted); }
-  .clips{ display:flex; gap:6px; align-items:stretch; min-height:62px; }
-  .clip{ position:relative; min-width:70px; height:62px; border-radius:8px; overflow:hidden; cursor:pointer; border:2px solid transparent; background:var(--panel2); flex:0 0 auto; }
+  .clips{ display:flex; gap:6px; align-items:stretch; min-height:64px; }
+  .clip{ position:relative; min-width:72px; height:64px; border-radius:8px; overflow:hidden; cursor:grab; border:2px solid transparent; background:var(--panel2); flex:0 0 auto; }
+  .clip:active{ cursor:grabbing; }
   .clip.sel{ border-color:var(--accent); box-shadow:0 0 0 2px rgba(108,140,255,.3); }
-  .clip img,.clip video{ width:100%; height:100%; object-fit:cover; }
+  .clip.dragging{ opacity:.35; }
+  .clip.dragover{ border-color:var(--accent2); box-shadow:0 0 0 2px rgba(160,108,255,.4); }
+  .clip img,.clip video{ width:100%; height:100%; object-fit:cover; pointer-events:none; }
   .clip .ci{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:1.2rem; }
   .clip .dur{ position:absolute; bottom:2px; right:3px; font-size:.6rem; background:rgba(0,0,0,.65); padding:1px 4px; border-radius:4px; }
-  .clip .lbl{ position:absolute; top:2px; left:3px; font-size:.6rem; background:rgba(0,0,0,.55); padding:1px 4px; border-radius:4px; max-width:80%; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+  .clip .lbl{ position:absolute; top:2px; left:3px; font-size:.6rem; background:rgba(0,0,0,.55); padding:1px 4px; border-radius:4px; max-width:62%; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
   .clip .del{ position:absolute; top:2px; right:2px; width:18px; height:18px; border:none; border-radius:4px; background:rgba(0,0,0,.6); color:#fff; cursor:pointer; font-size:.6rem; opacity:0; transition:.15s; }
   .clip:hover .del{ opacity:1; }
-  .audio-clip{ background:linear-gradient(135deg,#2c6e49,#1d4d34); display:flex; align-items:center; justify-content:center; flex-direction:column; gap:3px; color:#d8f5e6; font-size:.7rem; }
+  .clip .mv{ position:absolute; top:50%; transform:translateY(-50%); width:18px; height:30px; border:none; background:rgba(0,0,0,.6); color:#fff; cursor:pointer; font-size:.7rem; opacity:0; transition:.15s; display:flex; align-items:center; justify-content:center; z-index:2; }
+  .clip:hover .mv{ opacity:.9; }
+  .clip .mv:hover{ background:var(--accent); }
+  .clip .mv.l{ left:0; border-radius:0 6px 6px 0; }
+  .clip .mv.r{ right:0; border-radius:6px 0 0 6px; }
+  .clip .trans-badge{ position:absolute; bottom:2px; left:3px; font-size:.58rem; background:rgba(160,108,255,.85); padding:1px 4px; border-radius:4px; }
+  .audio-clip{ background:linear-gradient(135deg,#2c6e49,#1d4d34); display:flex; align-items:center; justify-content:center; flex-direction:column; gap:3px; color:#d8f5e6; font-size:.7rem; cursor:default; }
   .tl-empty{ color:var(--muted); font-size:.85rem; padding:18px; }
   .playhead-tl{ font-variant-numeric:tabular-nums; color:var(--muted); font-size:.78rem; }
 
@@ -128,25 +150,32 @@
 
 <!-- TOP BAR -->
 <div class="topbar">
-  <div class="logo"><i class="fa-solid fa-film"></i> Movie Maker <small>HTML5 Video Stüdyosu</small></div>
+  <div class="logo"><i class="fa-solid fa-film"></i> Movie Maker <small id="t_subtitle">HTML5 Video Studio</small></div>
   <div class="spacer"></div>
+  <select class="lang-sel" id="langSel" title="Language"></select>
   <button class="btn ghost sm" id="aspectBtn"><i class="fa-solid fa-crop-simple"></i> 16:9</button>
-  <button class="btn ghost sm" id="newProjectBtn"><i class="fa-solid fa-file"></i> Yeni</button>
-  <button class="btn primary" id="exportBtn"><i class="fa-solid fa-download"></i> Videoyu Dışa Aktar</button>
+  <button class="btn ghost sm" id="newProjectBtn"><i class="fa-solid fa-file"></i> <span id="t_new">New</span></button>
+  <button class="btn ghost sm" id="saveProjectBtn"><i class="fa-solid fa-floppy-disk"></i> <span id="t_save">Save</span></button>
+  <button class="btn ghost sm" id="loadProjectBtn"><i class="fa-solid fa-folder-open"></i> <span id="t_load">Open</span></button>
+  <input type="file" id="loadInput" accept="application/json,.json" hidden>
+  <button class="btn primary" id="exportBtn"><i class="fa-solid fa-download"></i> <span id="t_export">Export Video</span></button>
 </div>
 
 <div class="main">
   <!-- LEFT: MEDIA BIN -->
   <div class="col-left">
-    <div class="panel-title"><i class="fa-solid fa-photo-film"></i> Medya Kütüphanesi</div>
+    <div class="panel-title"><i class="fa-solid fa-photo-film"></i> <span id="t_mediaLib">Media Library</span></div>
     <div class="media-actions">
-      <button class="btn primary sm" id="importBtn"><i class="fa-solid fa-upload"></i> Medya İçe Aktar</button>
-      <button class="btn ghost sm" id="addTitleBtn"><i class="fa-solid fa-font"></i> Başlık/Yazı Kartı Ekle</button>
+      <button class="btn primary sm" id="importBtn"><i class="fa-solid fa-upload"></i> <span id="t_import">Import Media</span></button>
+      <button class="btn ghost sm" id="addTitleBtn"><i class="fa-solid fa-font"></i> <span id="t_addTitle">Add Title Card</span></button>
       <input type="file" id="fileInput" accept="image/*,video/*,audio/*" multiple hidden>
     </div>
-    <div class="media-list" id="mediaList">
-      <div class="empty-hint">Görsel, video veya ses dosyalarını içe aktarın.<br>Ardından <b>+</b> ile zaman çizelgesine ekleyin.</div>
+    <div class="tabs">
+      <button class="on" id="tabImagesBtn" data-tab="images"><i class="fa-solid fa-image"></i> <span id="t_tabImages">Images</span></button>
+      <button id="tabAudioBtn" data-tab="audio"><i class="fa-solid fa-music"></i> <span id="t_tabAudio">Audio</span></button>
     </div>
+    <div class="media-list" id="mediaListImages"></div>
+    <div class="media-list" id="mediaListAudio" hidden></div>
   </div>
 
   <!-- CENTER: PREVIEW + TIMELINE -->
@@ -155,8 +184,8 @@
       <canvas id="stage" width="1280" height="720"></canvas>
     </div>
     <div class="transport">
-      <button class="icon-btn" id="toStartBtn" title="Başa dön"><i class="fa-solid fa-backward-step"></i></button>
-      <button class="icon-btn big" id="playBtn" title="Oynat/Duraklat"><i class="fa-solid fa-play"></i></button>
+      <button class="icon-btn" id="toStartBtn"><i class="fa-solid fa-backward-step"></i></button>
+      <button class="icon-btn big" id="playBtn"><i class="fa-solid fa-play"></i></button>
       <span class="time" id="timeLabel">0.0s / 0.0s</span>
       <input type="range" class="scrub" id="scrub" min="0" max="1000" value="0">
     </div>
@@ -164,19 +193,19 @@
     <!-- TIMELINE -->
     <div class="timeline">
       <div class="tl-head">
-        <span class="lbl"><i class="fa-solid fa-bars-staggered"></i> Zaman Çizelgesi</span>
-        <span class="playhead-tl" id="tlTotal">Toplam: 0.0s</span>
+        <span class="lbl"><i class="fa-solid fa-bars-staggered"></i> <span id="t_timeline">Timeline</span></span>
+        <span class="playhead-tl" id="tlTotal"></span>
         <div class="spacer" style="flex:1"></div>
-        <button class="btn ghost sm" id="clearTlBtn"><i class="fa-solid fa-trash"></i> Temizle</button>
+        <button class="btn ghost sm" id="clearTlBtn"><i class="fa-solid fa-trash"></i> <span id="t_clear">Clear</span></button>
       </div>
       <div class="tracks">
         <div class="track-row">
-          <div class="track-ic" title="Video parçası"><i class="fa-solid fa-film"></i></div>
-          <div class="clips" id="videoTrack"><div class="tl-empty">Sahne eklemek için soldaki medyalardan <b>+</b>'a basın.</div></div>
+          <div class="track-ic"><i class="fa-solid fa-film"></i></div>
+          <div class="clips" id="videoTrack"></div>
         </div>
         <div class="track-row">
-          <div class="track-ic" title="Ses parçası"><i class="fa-solid fa-music"></i></div>
-          <div class="clips" id="audioTrack"><div class="tl-empty">Arka plan müziği için ses dosyası ekleyin.</div></div>
+          <div class="track-ic"><i class="fa-solid fa-music"></i></div>
+          <div class="clips" id="audioTrack"></div>
         </div>
       </div>
     </div>
@@ -184,27 +213,25 @@
 
   <!-- RIGHT: INSPECTOR -->
   <div class="col-right">
-    <div class="panel-title"><i class="fa-solid fa-sliders"></i> Özellikler</div>
-    <div class="insp" id="inspector">
-      <div class="no-sel">Düzenlemek için zaman çizelgesinden bir sahne seçin.</div>
-    </div>
+    <div class="panel-title"><i class="fa-solid fa-sliders"></i> <span id="t_props">Properties</span></div>
+    <div class="insp" id="inspector"></div>
   </div>
 </div>
 
 <!-- EXPORT MODAL -->
 <div class="modal-bg" id="exportModal">
   <div class="modal">
-    <h3><i class="fa-solid fa-download"></i> Videoyu Dışa Aktar</h3>
+    <h3><i class="fa-solid fa-download"></i> <span id="t_exTitle">Export Video</span></h3>
     <div id="exportSetup">
       <div class="field">
-        <label>Dosya Formatı</label>
+        <label id="t_exFormat">File Format</label>
         <div class="seg" id="formatSeg">
           <button class="on" data-fmt="webm">WebM</button>
           <button data-fmt="mp4">MP4</button>
         </div>
       </div>
       <div class="field">
-        <label>Çözünürlük</label>
+        <label id="t_exRes">Resolution</label>
         <select id="resSelect">
           <option value="1280x720">720p (1280×720)</option>
           <option value="1920x1080">1080p (1920×1080)</option>
@@ -212,31 +239,27 @@
         </select>
       </div>
       <div class="field">
-        <label>Kalite (bit hızı)</label>
-        <select id="qualitySelect">
-          <option value="8000000">Yüksek</option>
-          <option value="5000000" selected>Orta</option>
-          <option value="2500000">Düşük</option>
-        </select>
+        <label id="t_exQuality">Quality</label>
+        <select id="qualitySelect"></select>
       </div>
       <p class="muted" id="fmtNote"></p>
       <div style="display:flex; gap:10px; margin-top:16px;">
-        <button class="btn ghost" id="exportCancel" style="flex:1">İptal</button>
-        <button class="btn good" id="exportStart" style="flex:2"><i class="fa-solid fa-circle-dot"></i> Kaydı Başlat</button>
+        <button class="btn ghost" id="exportCancel" style="flex:1" >Cancel</button>
+        <button class="btn good" id="exportStart" style="flex:2"><i class="fa-solid fa-circle-dot"></i> <span id="t_exStart">Start Recording</span></button>
       </div>
     </div>
     <div id="exportProgress" style="display:none">
-      <p class="muted">Video gerçek zamanlı olarak işleniyor. Lütfen sekmeyi açık tutun…</p>
+      <p class="muted" id="t_exProcMsg">The video is rendered in real time. Please keep this tab open…</p>
       <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
-      <p class="muted" id="progText">Hazırlanıyor…</p>
-      <button class="btn ghost" id="exportStop" style="width:100%; margin-top:10px;">Durdur</button>
+      <p class="muted" id="progText"></p>
+      <button class="btn ghost" id="exportStop" style="width:100%; margin-top:10px;">Stop</button>
     </div>
     <div id="exportDone" style="display:none; text-align:center;">
       <i class="fa-solid fa-circle-check" style="color:var(--good); font-size:2.4rem;"></i>
-      <h3 style="justify-content:center; margin-top:12px;">Video Hazır!</h3>
+      <h3 style="justify-content:center; margin-top:12px;" id="t_exDone">Video Ready!</h3>
       <p class="muted" id="doneInfo"></p>
-      <a id="downloadLink" class="btn good" style="width:100%; margin-top:14px; justify-content:center;" download><i class="fa-solid fa-download"></i> İndir</a>
-      <button class="btn ghost" id="exportClose" style="width:100%; margin-top:10px;">Kapat</button>
+      <a id="downloadLink" class="btn good" style="width:100%; margin-top:14px; justify-content:center;" download><i class="fa-solid fa-download"></i> <span id="t_exDownload">Download</span></a>
+      <button class="btn ghost" id="exportClose" style="width:100%; margin-top:10px;">Close</button>
     </div>
   </div>
 </div>
@@ -245,239 +268,685 @@
 
 <script>
 /* ============================================================
-   Movie Maker — HTML5 video editör
-   - Medya kütüphanesi, zaman çizelgesi, canlı önizleme
-   - Canvas + MediaRecorder ile WebM/MP4 dışa aktarma
+   Movie Maker — HTML5 video editor
+   Features: 11-language UI, JSON project save/load (base64
+   images, uint8array audio), drag & button clip reordering,
+   media library tabs, inter-clip transition effects.
    ============================================================ */
 
 const $ = s => document.querySelector(s);
 const stage = $('#stage');
 const ctx = stage.getContext('2d');
+const mediaById = id => state.media.find(m=>m.id===id);
 
-// ---- Durum ----
+// ============================================================
+//  I18N — 11 LANGUAGES (default English)
+// ============================================================
+const LANGS = [
+  {code:'en',name:'English'},{code:'de',name:'Deutsch'},{code:'fr',name:'Français'},
+  {code:'it',name:'Italiano'},{code:'es',name:'Español'},{code:'hu',name:'Magyar'},
+  {code:'ru',name:'Русский'},{code:'ar',name:'العربية'},{code:'tr',name:'Türkçe'},
+  {code:'zh',name:'中文'},{code:'ja',name:'日本語'}
+];
+
+const I18N = {
+ en:{subtitle:"HTML5 Video Studio",neww:"New",save:"Save",load:"Open",export:"Export Video",
+  mediaLib:"Media Library",import:"Import Media",addTitle:"Add Title Card",tabImages:"Images",tabAudio:"Audio",
+  emptyImages:"Import image or video files, then press + to add them to the timeline.",
+  emptyAudio:"Import audio files to use as background music.",
+  photo:"Photo",video:"Video",title:"Title",audioTag:"Audio",addTip:"Add to timeline",removeTip:"Remove",
+  timeline:"Timeline",total:"Total",clear:"Clear",
+  tlEmptyVideo:"Press + on a media item to add a scene.",tlEmptyAudio:"Add an audio file for background music.",
+  props:"Properties",noSel:"Select a scene from the timeline to edit it.",
+  duration:"Duration (seconds)",titleText:"Title Card Text",overlayText:"Overlay Text (optional)",textPh:"Text…",
+  textPos:"Text Position",posTop:"Top",posCenter:"Center",posBottom:"Bottom",fontSize:"Font Size",
+  textColor:"Text Color",bgColor:"Background Color",fit:"Fit",fitContain:"Fit",fitCover:"Fill",
+  filter:"Filter",fNone:"None",fGray:"Grayscale",fSepia:"Sepia",fBright:"Bright",fContrast:"Contrast",fBlur:"Blur",fVintage:"Vintage",
+  kenBurns:"Slow zoom (Ken Burns)",transition:"Transition to Next Scene",transDur:"Transition Duration",
+  trNone:"None",trFade:"Crossfade",trFadeBlack:"Fade through Black",trSlideL:"Slide Left",trSlideR:"Slide Right",
+  trSlideU:"Slide Up",trSlideD:"Slide Down",trWipeL:"Wipe Left",trWipeR:"Wipe Right",trZoom:"Zoom",trCircle:"Circle Reveal",
+  openClose:"Open / Close (to black)",fadeIn:"Fade In",fadeOut:"Fade Out",trimStart:"Trim Start (s)",
+  moveLeft:"Move left",moveRight:"Move right",delClip:"Delete scene",
+  exTitle:"Export Video",exFormat:"File Format",exRes:"Resolution",exQuality:"Quality",
+  qHigh:"High",qMedium:"Medium",qLow:"Low",cancel:"Cancel",exStart:"Start Recording",
+  exProcMsg:"The video is rendered in real time. Please keep this tab open…",
+  preparing:"Preparing…",processing:"Processing",stop:"Stop",exDone:"Video Ready!",download:"Download",close:"Close",
+  infoDur:"Duration",infoSize:"Size",
+  noteWebm:"✅ WebM is supported by all modern browsers.",
+  noteMp4Ok:"✅ Your browser supports recording MP4 directly.",
+  noteMp4No:"⚠️ Your browser cannot record MP4 directly. It will be saved as WebM with an .mp4 extension (most players open it). For best MP4 support use Chrome 130+ or Safari.",
+  mp4Fallback:"Note: the browser could not produce true MP4, so the content was encoded as WebM (with .mp4 extension).",
+  confirmNew:"Start a new project? The current work will be cleared.",
+  unsupported:"Unsupported file type",musicAdded:"Background music added",addFirst:"Add scenes to the timeline first",
+  videoReady:"Video ready!",saved:"Project saved",loaded:"Project loaded",loadErr:"Could not load the project file",
+  playTip:"Play / Pause",startTip:"Go to start",hintCanvas:"🎬 Add media and arrange scenes on the timeline"},
+
+ de:{subtitle:"HTML5 Videostudio",neww:"Neu",save:"Speichern",load:"Öffnen",export:"Video exportieren",
+  mediaLib:"Medienbibliothek",import:"Medien importieren",addTitle:"Titelkarte hinzufügen",tabImages:"Bilder",tabAudio:"Audio",
+  emptyImages:"Bild- oder Videodateien importieren, dann mit + zur Zeitleiste hinzufügen.",
+  emptyAudio:"Audiodateien als Hintergrundmusik importieren.",
+  photo:"Foto",video:"Video",title:"Titel",audioTag:"Audio",addTip:"Zur Zeitleiste",removeTip:"Entfernen",
+  timeline:"Zeitleiste",total:"Gesamt",clear:"Leeren",
+  tlEmptyVideo:"Auf + eines Mediums drücken, um eine Szene hinzuzufügen.",tlEmptyAudio:"Audiodatei für Hintergrundmusik hinzufügen.",
+  props:"Eigenschaften",noSel:"Eine Szene in der Zeitleiste auswählen, um sie zu bearbeiten.",
+  duration:"Dauer (Sekunden)",titleText:"Titelkartentext",overlayText:"Überlagerungstext (optional)",textPh:"Text…",
+  textPos:"Textposition",posTop:"Oben",posCenter:"Mitte",posBottom:"Unten",fontSize:"Schriftgröße",
+  textColor:"Textfarbe",bgColor:"Hintergrundfarbe",fit:"Anpassen",fitContain:"Einpassen",fitCover:"Füllen",
+  filter:"Filter",fNone:"Kein",fGray:"Graustufen",fSepia:"Sepia",fBright:"Hell",fContrast:"Kontrast",fBlur:"Unschärfe",fVintage:"Vintage",
+  kenBurns:"Langsamer Zoom (Ken Burns)",transition:"Übergang zur nächsten Szene",transDur:"Übergangsdauer",
+  trNone:"Kein",trFade:"Überblendung",trFadeBlack:"Über Schwarz",trSlideL:"Nach links",trSlideR:"Nach rechts",
+  trSlideU:"Nach oben",trSlideD:"Nach unten",trWipeL:"Wischen links",trWipeR:"Wischen rechts",trZoom:"Zoom",trCircle:"Kreis",
+  openClose:"Auf / Zu (zu Schwarz)",fadeIn:"Einblenden",fadeOut:"Ausblenden",trimStart:"Startbeschnitt (s)",
+  moveLeft:"Nach links",moveRight:"Nach rechts",delClip:"Szene löschen",
+  exTitle:"Video exportieren",exFormat:"Dateiformat",exRes:"Auflösung",exQuality:"Qualität",
+  qHigh:"Hoch",qMedium:"Mittel",qLow:"Niedrig",cancel:"Abbrechen",exStart:"Aufnahme starten",
+  exProcMsg:"Das Video wird in Echtzeit gerendert. Bitte diesen Tab geöffnet lassen…",
+  preparing:"Vorbereiten…",processing:"Verarbeitung",stop:"Stopp",exDone:"Video fertig!",download:"Herunterladen",close:"Schließen",
+  infoDur:"Dauer",infoSize:"Größe",
+  noteWebm:"✅ WebM wird von allen modernen Browsern unterstützt.",
+  noteMp4Ok:"✅ Ihr Browser unterstützt die direkte MP4-Aufnahme.",
+  noteMp4No:"⚠️ Ihr Browser kann MP4 nicht direkt aufnehmen. Es wird als WebM mit .mp4-Endung gespeichert. Für beste MP4-Unterstützung Chrome 130+ oder Safari verwenden.",
+  mp4Fallback:"Hinweis: Der Browser konnte kein echtes MP4 erzeugen, daher wurde der Inhalt als WebM kodiert (mit .mp4-Endung).",
+  confirmNew:"Neues Projekt starten? Die aktuelle Arbeit wird gelöscht.",
+  unsupported:"Nicht unterstützter Dateityp",musicAdded:"Hintergrundmusik hinzugefügt",addFirst:"Zuerst Szenen hinzufügen",
+  videoReady:"Video fertig!",saved:"Projekt gespeichert",loaded:"Projekt geladen",loadErr:"Projektdatei konnte nicht geladen werden",
+  playTip:"Wiedergabe / Pause",startTip:"Zum Anfang",hintCanvas:"🎬 Medien hinzufügen und Szenen anordnen"},
+
+ fr:{subtitle:"Studio Vidéo HTML5",neww:"Nouveau",save:"Enregistrer",load:"Ouvrir",export:"Exporter la vidéo",
+  mediaLib:"Bibliothèque",import:"Importer un média",addTitle:"Ajouter un titre",tabImages:"Images",tabAudio:"Audio",
+  emptyImages:"Importez des images ou vidéos, puis appuyez sur + pour les ajouter à la timeline.",
+  emptyAudio:"Importez des fichiers audio comme musique de fond.",
+  photo:"Photo",video:"Vidéo",title:"Titre",audioTag:"Audio",addTip:"Ajouter à la timeline",removeTip:"Supprimer",
+  timeline:"Timeline",total:"Total",clear:"Effacer",
+  tlEmptyVideo:"Appuyez sur + d'un média pour ajouter une scène.",tlEmptyAudio:"Ajoutez un fichier audio pour la musique de fond.",
+  props:"Propriétés",noSel:"Sélectionnez une scène dans la timeline pour la modifier.",
+  duration:"Durée (secondes)",titleText:"Texte du titre",overlayText:"Texte superposé (facultatif)",textPh:"Texte…",
+  textPos:"Position du texte",posTop:"Haut",posCenter:"Centre",posBottom:"Bas",fontSize:"Taille de police",
+  textColor:"Couleur du texte",bgColor:"Couleur de fond",fit:"Ajustement",fitContain:"Ajuster",fitCover:"Remplir",
+  filter:"Filtre",fNone:"Aucun",fGray:"Niveaux de gris",fSepia:"Sépia",fBright:"Lumineux",fContrast:"Contraste",fBlur:"Flou",fVintage:"Vintage",
+  kenBurns:"Zoom lent (Ken Burns)",transition:"Transition vers la scène suivante",transDur:"Durée de transition",
+  trNone:"Aucune",trFade:"Fondu enchaîné",trFadeBlack:"Fondu au noir",trSlideL:"Glisser à gauche",trSlideR:"Glisser à droite",
+  trSlideU:"Glisser vers le haut",trSlideD:"Glisser vers le bas",trWipeL:"Balayage gauche",trWipeR:"Balayage droite",trZoom:"Zoom",trCircle:"Cercle",
+  openClose:"Ouverture / Fermeture (au noir)",fadeIn:"Fondu d'ouverture",fadeOut:"Fondu de fermeture",trimStart:"Début du rognage (s)",
+  moveLeft:"Déplacer à gauche",moveRight:"Déplacer à droite",delClip:"Supprimer la scène",
+  exTitle:"Exporter la vidéo",exFormat:"Format de fichier",exRes:"Résolution",exQuality:"Qualité",
+  qHigh:"Haute",qMedium:"Moyenne",qLow:"Basse",cancel:"Annuler",exStart:"Démarrer l'enregistrement",
+  exProcMsg:"La vidéo est rendue en temps réel. Veuillez garder cet onglet ouvert…",
+  preparing:"Préparation…",processing:"Traitement",stop:"Arrêter",exDone:"Vidéo prête !",download:"Télécharger",close:"Fermer",
+  infoDur:"Durée",infoSize:"Taille",
+  noteWebm:"✅ WebM est pris en charge par tous les navigateurs modernes.",
+  noteMp4Ok:"✅ Votre navigateur prend en charge l'enregistrement MP4 direct.",
+  noteMp4No:"⚠️ Votre navigateur ne peut pas enregistrer en MP4 directement. Le fichier sera enregistré en WebM avec l'extension .mp4. Pour un meilleur support MP4, utilisez Chrome 130+ ou Safari.",
+  mp4Fallback:"Remarque : le navigateur n'a pas pu produire un vrai MP4, le contenu a donc été encodé en WebM (avec extension .mp4).",
+  confirmNew:"Démarrer un nouveau projet ? Le travail actuel sera effacé.",
+  unsupported:"Type de fichier non pris en charge",musicAdded:"Musique de fond ajoutée",addFirst:"Ajoutez d'abord des scènes",
+  videoReady:"Vidéo prête !",saved:"Projet enregistré",loaded:"Projet chargé",loadErr:"Impossible de charger le projet",
+  playTip:"Lecture / Pause",startTip:"Aller au début",hintCanvas:"🎬 Ajoutez des médias et organisez les scènes"},
+
+ it:{subtitle:"Studio Video HTML5",neww:"Nuovo",save:"Salva",load:"Apri",export:"Esporta video",
+  mediaLib:"Libreria multimediale",import:"Importa media",addTitle:"Aggiungi titolo",tabImages:"Immagini",tabAudio:"Audio",
+  emptyImages:"Importa immagini o video, poi premi + per aggiungerli alla timeline.",
+  emptyAudio:"Importa file audio come musica di sottofondo.",
+  photo:"Foto",video:"Video",title:"Titolo",audioTag:"Audio",addTip:"Aggiungi alla timeline",removeTip:"Rimuovi",
+  timeline:"Timeline",total:"Totale",clear:"Svuota",
+  tlEmptyVideo:"Premi + su un media per aggiungere una scena.",tlEmptyAudio:"Aggiungi un file audio per la musica di sottofondo.",
+  props:"Proprietà",noSel:"Seleziona una scena dalla timeline per modificarla.",
+  duration:"Durata (secondi)",titleText:"Testo del titolo",overlayText:"Testo sovrapposto (facoltativo)",textPh:"Testo…",
+  textPos:"Posizione testo",posTop:"Alto",posCenter:"Centro",posBottom:"Basso",fontSize:"Dimensione carattere",
+  textColor:"Colore testo",bgColor:"Colore sfondo",fit:"Adatta",fitContain:"Adatta",fitCover:"Riempi",
+  filter:"Filtro",fNone:"Nessuno",fGray:"Scala di grigi",fSepia:"Seppia",fBright:"Luminoso",fContrast:"Contrasto",fBlur:"Sfocatura",fVintage:"Vintage",
+  kenBurns:"Zoom lento (Ken Burns)",transition:"Transizione alla scena successiva",transDur:"Durata transizione",
+  trNone:"Nessuna",trFade:"Dissolvenza incrociata",trFadeBlack:"Dissolvenza al nero",trSlideL:"Scorri a sinistra",trSlideR:"Scorri a destra",
+  trSlideU:"Scorri in alto",trSlideD:"Scorri in basso",trWipeL:"Tendina sinistra",trWipeR:"Tendina destra",trZoom:"Zoom",trCircle:"Cerchio",
+  openClose:"Apertura / Chiusura (al nero)",fadeIn:"Dissolvenza in entrata",fadeOut:"Dissolvenza in uscita",trimStart:"Inizio taglio (s)",
+  moveLeft:"Sposta a sinistra",moveRight:"Sposta a destra",delClip:"Elimina scena",
+  exTitle:"Esporta video",exFormat:"Formato file",exRes:"Risoluzione",exQuality:"Qualità",
+  qHigh:"Alta",qMedium:"Media",qLow:"Bassa",cancel:"Annulla",exStart:"Avvia registrazione",
+  exProcMsg:"Il video viene elaborato in tempo reale. Mantieni questa scheda aperta…",
+  preparing:"Preparazione…",processing:"Elaborazione",stop:"Ferma",exDone:"Video pronto!",download:"Scarica",close:"Chiudi",
+  infoDur:"Durata",infoSize:"Dimensione",
+  noteWebm:"✅ WebM è supportato da tutti i browser moderni.",
+  noteMp4Ok:"✅ Il tuo browser supporta la registrazione MP4 diretta.",
+  noteMp4No:"⚠️ Il tuo browser non può registrare MP4 direttamente. Verrà salvato come WebM con estensione .mp4. Per il miglior supporto MP4 usa Chrome 130+ o Safari.",
+  mp4Fallback:"Nota: il browser non ha potuto produrre un vero MP4, quindi il contenuto è stato codificato come WebM (con estensione .mp4).",
+  confirmNew:"Iniziare un nuovo progetto? Il lavoro corrente sarà cancellato.",
+  unsupported:"Tipo di file non supportato",musicAdded:"Musica di sottofondo aggiunta",addFirst:"Aggiungi prima delle scene",
+  videoReady:"Video pronto!",saved:"Progetto salvato",loaded:"Progetto caricato",loadErr:"Impossibile caricare il progetto",
+  playTip:"Riproduci / Pausa",startTip:"Vai all'inizio",hintCanvas:"🎬 Aggiungi media e disponi le scene"},
+
+ es:{subtitle:"Estudio de Vídeo HTML5",neww:"Nuevo",save:"Guardar",load:"Abrir",export:"Exportar vídeo",
+  mediaLib:"Biblioteca multimedia",import:"Importar medios",addTitle:"Añadir título",tabImages:"Imágenes",tabAudio:"Audio",
+  emptyImages:"Importa imágenes o vídeos y pulsa + para añadirlos a la línea de tiempo.",
+  emptyAudio:"Importa archivos de audio como música de fondo.",
+  photo:"Foto",video:"Vídeo",title:"Título",audioTag:"Audio",addTip:"Añadir a la línea de tiempo",removeTip:"Quitar",
+  timeline:"Línea de tiempo",total:"Total",clear:"Limpiar",
+  tlEmptyVideo:"Pulsa + en un medio para añadir una escena.",tlEmptyAudio:"Añade un archivo de audio para la música de fondo.",
+  props:"Propiedades",noSel:"Selecciona una escena de la línea de tiempo para editarla.",
+  duration:"Duración (segundos)",titleText:"Texto del título",overlayText:"Texto superpuesto (opcional)",textPh:"Texto…",
+  textPos:"Posición del texto",posTop:"Arriba",posCenter:"Centro",posBottom:"Abajo",fontSize:"Tamaño de fuente",
+  textColor:"Color del texto",bgColor:"Color de fondo",fit:"Ajuste",fitContain:"Ajustar",fitCover:"Rellenar",
+  filter:"Filtro",fNone:"Ninguno",fGray:"Escala de grises",fSepia:"Sepia",fBright:"Brillante",fContrast:"Contraste",fBlur:"Desenfoque",fVintage:"Vintage",
+  kenBurns:"Zoom lento (Ken Burns)",transition:"Transición a la siguiente escena",transDur:"Duración de transición",
+  trNone:"Ninguna",trFade:"Fundido cruzado",trFadeBlack:"Fundido a negro",trSlideL:"Deslizar a la izquierda",trSlideR:"Deslizar a la derecha",
+  trSlideU:"Deslizar arriba",trSlideD:"Deslizar abajo",trWipeL:"Barrido izquierda",trWipeR:"Barrido derecha",trZoom:"Zoom",trCircle:"Círculo",
+  openClose:"Apertura / Cierre (a negro)",fadeIn:"Fundido de entrada",fadeOut:"Fundido de salida",trimStart:"Inicio de recorte (s)",
+  moveLeft:"Mover a la izquierda",moveRight:"Mover a la derecha",delClip:"Eliminar escena",
+  exTitle:"Exportar vídeo",exFormat:"Formato de archivo",exRes:"Resolución",exQuality:"Calidad",
+  qHigh:"Alta",qMedium:"Media",qLow:"Baja",cancel:"Cancelar",exStart:"Iniciar grabación",
+  exProcMsg:"El vídeo se procesa en tiempo real. Mantén esta pestaña abierta…",
+  preparing:"Preparando…",processing:"Procesando",stop:"Detener",exDone:"¡Vídeo listo!",download:"Descargar",close:"Cerrar",
+  infoDur:"Duración",infoSize:"Tamaño",
+  noteWebm:"✅ WebM es compatible con todos los navegadores modernos.",
+  noteMp4Ok:"✅ Tu navegador admite la grabación directa en MP4.",
+  noteMp4No:"⚠️ Tu navegador no puede grabar MP4 directamente. Se guardará como WebM con extensión .mp4. Para el mejor soporte MP4 usa Chrome 130+ o Safari.",
+  mp4Fallback:"Nota: el navegador no pudo producir un MP4 real, por lo que el contenido se codificó como WebM (con extensión .mp4).",
+  confirmNew:"¿Iniciar un nuevo proyecto? El trabajo actual se borrará.",
+  unsupported:"Tipo de archivo no compatible",musicAdded:"Música de fondo añadida",addFirst:"Añade escenas primero",
+  videoReady:"¡Vídeo listo!",saved:"Proyecto guardado",loaded:"Proyecto cargado",loadErr:"No se pudo cargar el proyecto",
+  playTip:"Reproducir / Pausa",startTip:"Ir al inicio",hintCanvas:"🎬 Añade medios y organiza las escenas"},
+
+ hu:{subtitle:"HTML5 Videóstúdió",neww:"Új",save:"Mentés",load:"Megnyitás",export:"Videó exportálása",
+  mediaLib:"Médiatár",import:"Média importálása",addTitle:"Címkártya hozzáadása",tabImages:"Képek",tabAudio:"Hang",
+  emptyImages:"Importálj kép- vagy videófájlokat, majd a + gombbal add az idővonalhoz.",
+  emptyAudio:"Importálj hangfájlokat háttérzeneként.",
+  photo:"Fotó",video:"Videó",title:"Cím",audioTag:"Hang",addTip:"Idővonalhoz adás",removeTip:"Eltávolítás",
+  timeline:"Idővonal",total:"Összesen",clear:"Törlés",
+  tlEmptyVideo:"Nyomd meg a + gombot egy médián jelenet hozzáadásához.",tlEmptyAudio:"Adj hozzá hangfájlt háttérzenének.",
+  props:"Tulajdonságok",noSel:"Válassz egy jelenetet az idővonalon a szerkesztéshez.",
+  duration:"Időtartam (másodperc)",titleText:"Címkártya szövege",overlayText:"Rávetített szöveg (opcionális)",textPh:"Szöveg…",
+  textPos:"Szöveg helye",posTop:"Fent",posCenter:"Közép",posBottom:"Lent",fontSize:"Betűméret",
+  textColor:"Szövegszín",bgColor:"Háttérszín",fit:"Illesztés",fitContain:"Illeszt",fitCover:"Kitölt",
+  filter:"Szűrő",fNone:"Nincs",fGray:"Szürkeárnyalat",fSepia:"Szépia",fBright:"Világos",fContrast:"Kontraszt",fBlur:"Elmosás",fVintage:"Vintage",
+  kenBurns:"Lassú nagyítás (Ken Burns)",transition:"Áttűnés a következő jelenetre",transDur:"Áttűnés időtartama",
+  trNone:"Nincs",trFade:"Kereszttűnés",trFadeBlack:"Áttűnés feketén át",trSlideL:"Csúsztatás balra",trSlideR:"Csúsztatás jobbra",
+  trSlideU:"Csúsztatás fel",trSlideD:"Csúsztatás le",trWipeL:"Letörlés balra",trWipeR:"Letörlés jobbra",trZoom:"Nagyítás",trCircle:"Kör",
+  openClose:"Nyitás / Zárás (feketére)",fadeIn:"Beúsztatás",fadeOut:"Kiúsztatás",trimStart:"Vágás kezdete (mp)",
+  moveLeft:"Balra mozgatás",moveRight:"Jobbra mozgatás",delClip:"Jelenet törlése",
+  exTitle:"Videó exportálása",exFormat:"Fájlformátum",exRes:"Felbontás",exQuality:"Minőség",
+  qHigh:"Magas",qMedium:"Közepes",qLow:"Alacsony",cancel:"Mégse",exStart:"Felvétel indítása",
+  exProcMsg:"A videó valós időben készül. Kérjük, hagyd nyitva ezt a lapot…",
+  preparing:"Előkészítés…",processing:"Feldolgozás",stop:"Leállítás",exDone:"A videó kész!",download:"Letöltés",close:"Bezárás",
+  infoDur:"Időtartam",infoSize:"Méret",
+  noteWebm:"✅ A WebM-et minden modern böngésző támogatja.",
+  noteMp4Ok:"✅ A böngésződ támogatja a közvetlen MP4 rögzítést.",
+  noteMp4No:"⚠️ A böngésződ nem tud közvetlenül MP4-et rögzíteni. WebM-ként lesz mentve .mp4 kiterjesztéssel. A legjobb MP4 támogatáshoz használj Chrome 130+ vagy Safari böngészőt.",
+  mp4Fallback:"Megjegyzés: a böngésző nem tudott valódi MP4-et készíteni, ezért a tartalom WebM-ként lett kódolva (.mp4 kiterjesztéssel).",
+  confirmNew:"Új projekt indítása? A jelenlegi munka törlődik.",
+  unsupported:"Nem támogatott fájltípus",musicAdded:"Háttérzene hozzáadva",addFirst:"Először adj hozzá jeleneteket",
+  videoReady:"A videó kész!",saved:"Projekt mentve",loaded:"Projekt betöltve",loadErr:"A projektfájl nem tölthető be",
+  playTip:"Lejátszás / Szünet",startTip:"Ugrás az elejére",hintCanvas:"🎬 Adj hozzá médiát és rendezd a jeleneteket"},
+
+ ru:{subtitle:"HTML5 видеостудия",neww:"Новый",save:"Сохранить",load:"Открыть",export:"Экспорт видео",
+  mediaLib:"Медиатека",import:"Импорт медиа",addTitle:"Добавить титр",tabImages:"Изображения",tabAudio:"Аудио",
+  emptyImages:"Импортируйте изображения или видео, затем нажмите + чтобы добавить их на шкалу времени.",
+  emptyAudio:"Импортируйте аудиофайлы как фоновую музыку.",
+  photo:"Фото",video:"Видео",title:"Титр",audioTag:"Аудио",addTip:"Добавить на шкалу",removeTip:"Удалить",
+  timeline:"Шкала времени",total:"Всего",clear:"Очистить",
+  tlEmptyVideo:"Нажмите + на медиа, чтобы добавить сцену.",tlEmptyAudio:"Добавьте аудиофайл для фоновой музыки.",
+  props:"Свойства",noSel:"Выберите сцену на шкале времени для редактирования.",
+  duration:"Длительность (секунды)",titleText:"Текст титра",overlayText:"Наложенный текст (необязательно)",textPh:"Текст…",
+  textPos:"Положение текста",posTop:"Вверху",posCenter:"По центру",posBottom:"Внизу",fontSize:"Размер шрифта",
+  textColor:"Цвет текста",bgColor:"Цвет фона",fit:"Вписать",fitContain:"Вписать",fitCover:"Заполнить",
+  filter:"Фильтр",fNone:"Нет",fGray:"Чёрно-белый",fSepia:"Сепия",fBright:"Яркость",fContrast:"Контраст",fBlur:"Размытие",fVintage:"Винтаж",
+  kenBurns:"Медленный зум (Ken Burns)",transition:"Переход к следующей сцене",transDur:"Длительность перехода",
+  trNone:"Нет",trFade:"Перекрёстное затухание",trFadeBlack:"Через чёрный",trSlideL:"Сдвиг влево",trSlideR:"Сдвиг вправо",
+  trSlideU:"Сдвиг вверх",trSlideD:"Сдвиг вниз",trWipeL:"Шторка влево",trWipeR:"Шторка вправо",trZoom:"Зум",trCircle:"Круг",
+  openClose:"Открытие / Закрытие (в чёрный)",fadeIn:"Появление",fadeOut:"Затухание",trimStart:"Начало обрезки (с)",
+  moveLeft:"Влево",moveRight:"Вправо",delClip:"Удалить сцену",
+  exTitle:"Экспорт видео",exFormat:"Формат файла",exRes:"Разрешение",exQuality:"Качество",
+  qHigh:"Высокое",qMedium:"Среднее",qLow:"Низкое",cancel:"Отмена",exStart:"Начать запись",
+  exProcMsg:"Видео обрабатывается в реальном времени. Пожалуйста, держите эту вкладку открытой…",
+  preparing:"Подготовка…",processing:"Обработка",stop:"Стоп",exDone:"Видео готово!",download:"Скачать",close:"Закрыть",
+  infoDur:"Длительность",infoSize:"Размер",
+  noteWebm:"✅ WebM поддерживается всеми современными браузерами.",
+  noteMp4Ok:"✅ Ваш браузер поддерживает прямую запись MP4.",
+  noteMp4No:"⚠️ Ваш браузер не может записывать MP4 напрямую. Файл будет сохранён как WebM с расширением .mp4. Для лучшей поддержки MP4 используйте Chrome 130+ или Safari.",
+  mp4Fallback:"Примечание: браузер не смог создать настоящий MP4, поэтому содержимое закодировано как WebM (с расширением .mp4).",
+  confirmNew:"Начать новый проект? Текущая работа будет удалена.",
+  unsupported:"Неподдерживаемый тип файла",musicAdded:"Фоновая музыка добавлена",addFirst:"Сначала добавьте сцены",
+  videoReady:"Видео готово!",saved:"Проект сохранён",loaded:"Проект загружен",loadErr:"Не удалось загрузить проект",
+  playTip:"Воспроизведение / Пауза",startTip:"В начало",hintCanvas:"🎬 Добавьте медиа и расставьте сцены"},
+
+ ar:{subtitle:"استوديو فيديو HTML5",neww:"جديد",save:"حفظ",load:"فتح",export:"تصدير الفيديو",
+  mediaLib:"مكتبة الوسائط",import:"استيراد وسائط",addTitle:"إضافة بطاقة عنوان",tabImages:"الصور",tabAudio:"الصوت",
+  emptyImages:"استورد ملفات الصور أو الفيديو، ثم اضغط + لإضافتها إلى الخط الزمني.",
+  emptyAudio:"استورد ملفات صوتية لاستخدامها كموسيقى خلفية.",
+  photo:"صورة",video:"فيديو",title:"عنوان",audioTag:"صوت",addTip:"إضافة إلى الخط الزمني",removeTip:"إزالة",
+  timeline:"الخط الزمني",total:"الإجمالي",clear:"مسح",
+  tlEmptyVideo:"اضغط + على وسائط لإضافة مشهد.",tlEmptyAudio:"أضف ملفًا صوتيًا للموسيقى الخلفية.",
+  props:"الخصائص",noSel:"اختر مشهدًا من الخط الزمني لتحريره.",
+  duration:"المدة (ثوانٍ)",titleText:"نص بطاقة العنوان",overlayText:"نص متراكب (اختياري)",textPh:"نص…",
+  textPos:"موضع النص",posTop:"أعلى",posCenter:"وسط",posBottom:"أسفل",fontSize:"حجم الخط",
+  textColor:"لون النص",bgColor:"لون الخلفية",fit:"الملاءمة",fitContain:"ملاءمة",fitCover:"ملء",
+  filter:"مرشح",fNone:"بدون",fGray:"تدرج رمادي",fSepia:"بني داكن",fBright:"ساطع",fContrast:"تباين",fBlur:"ضبابي",fVintage:"عتيق",
+  kenBurns:"تكبير بطيء (Ken Burns)",transition:"الانتقال إلى المشهد التالي",transDur:"مدة الانتقال",
+  trNone:"بدون",trFade:"تلاشٍ متقاطع",trFadeBlack:"تلاشٍ عبر الأسود",trSlideL:"انزلاق لليسار",trSlideR:"انزلاق لليمين",
+  trSlideU:"انزلاق لأعلى",trSlideD:"انزلاق لأسفل",trWipeL:"مسح لليسار",trWipeR:"مسح لليمين",trZoom:"تكبير",trCircle:"دائرة",
+  openClose:"فتح / إغلاق (إلى الأسود)",fadeIn:"تلاشي للداخل",fadeOut:"تلاشي للخارج",trimStart:"بداية القص (ث)",
+  moveLeft:"تحريك لليسار",moveRight:"تحريك لليمين",delClip:"حذف المشهد",
+  exTitle:"تصدير الفيديو",exFormat:"صيغة الملف",exRes:"الدقة",exQuality:"الجودة",
+  qHigh:"عالية",qMedium:"متوسطة",qLow:"منخفضة",cancel:"إلغاء",exStart:"بدء التسجيل",
+  exProcMsg:"يتم إنشاء الفيديو في الوقت الفعلي. يرجى إبقاء هذه العلامة مفتوحة…",
+  preparing:"جارٍ التحضير…",processing:"جارٍ المعالجة",stop:"إيقاف",exDone:"الفيديو جاهز!",download:"تنزيل",close:"إغلاق",
+  infoDur:"المدة",infoSize:"الحجم",
+  noteWebm:"✅ صيغة WebM مدعومة في جميع المتصفحات الحديثة.",
+  noteMp4Ok:"✅ متصفحك يدعم تسجيل MP4 مباشرة.",
+  noteMp4No:"⚠️ لا يمكن لمتصفحك تسجيل MP4 مباشرة. سيُحفظ بصيغة WebM بامتداد .mp4. للحصول على أفضل دعم MP4 استخدم Chrome 130+ أو Safari.",
+  mp4Fallback:"ملاحظة: لم يتمكن المتصفح من إنتاج MP4 حقيقي، لذا تم ترميز المحتوى بصيغة WebM (بامتداد .mp4).",
+  confirmNew:"بدء مشروع جديد؟ سيتم مسح العمل الحالي.",
+  unsupported:"نوع ملف غير مدعوم",musicAdded:"تمت إضافة موسيقى الخلفية",addFirst:"أضف مشاهد أولاً",
+  videoReady:"الفيديو جاهز!",saved:"تم حفظ المشروع",loaded:"تم تحميل المشروع",loadErr:"تعذر تحميل ملف المشروع",
+  playTip:"تشغيل / إيقاف مؤقت",startTip:"إلى البداية",hintCanvas:"🎬 أضف الوسائط ورتب المشاهد"},
+
+ tr:{subtitle:"HTML5 Video Stüdyosu",neww:"Yeni",save:"Kaydet",load:"Aç",export:"Videoyu Dışa Aktar",
+  mediaLib:"Medya Kütüphanesi",import:"Medya İçe Aktar",addTitle:"Yazı Kartı Ekle",tabImages:"Görüntüler",tabAudio:"Sesler",
+  emptyImages:"Görsel veya video dosyalarını içe aktarın, ardından + ile zaman çizelgesine ekleyin.",
+  emptyAudio:"Arka plan müziği olarak kullanmak için ses dosyalarını içe aktarın.",
+  photo:"Foto",video:"Video",title:"Yazı",audioTag:"Ses",addTip:"Zaman çizelgesine ekle",removeTip:"Kaldır",
+  timeline:"Zaman Çizelgesi",total:"Toplam",clear:"Temizle",
+  tlEmptyVideo:"Sahne eklemek için bir medyanın + düğmesine basın.",tlEmptyAudio:"Arka plan müziği için ses dosyası ekleyin.",
+  props:"Özellikler",noSel:"Düzenlemek için zaman çizelgesinden bir sahne seçin.",
+  duration:"Süre (saniye)",titleText:"Yazı Kartı Metni",overlayText:"Üst Yazı (isteğe bağlı)",textPh:"Metin…",
+  textPos:"Yazı Konumu",posTop:"Üst",posCenter:"Orta",posBottom:"Alt",fontSize:"Yazı Boyutu",
+  textColor:"Yazı Rengi",bgColor:"Arka Plan Rengi",fit:"Sığdırma",fitContain:"Sığdır",fitCover:"Doldur",
+  filter:"Filtre",fNone:"Yok",fGray:"Siyah-Beyaz",fSepia:"Sepya",fBright:"Parlak",fContrast:"Kontrast",fBlur:"Bulanık",fVintage:"Vintage",
+  kenBurns:"Yavaş yakınlaşma (Ken Burns)",transition:"Sonraki Sahneye Geçiş",transDur:"Geçiş Süresi",
+  trNone:"Yok",trFade:"Çapraz Geçiş",trFadeBlack:"Siyahtan Geçiş",trSlideL:"Sola Kaydır",trSlideR:"Sağa Kaydır",
+  trSlideU:"Yukarı Kaydır",trSlideD:"Aşağı Kaydır",trWipeL:"Sola Silme",trWipeR:"Sağa Silme",trZoom:"Yakınlaştır",trCircle:"Daire",
+  openClose:"Açılış / Kapanış (siyaha)",fadeIn:"Açılış",fadeOut:"Kapanış",trimStart:"Kırpma Başlangıcı (s)",
+  moveLeft:"Sola taşı",moveRight:"Sağa taşı",delClip:"Sahneyi sil",
+  exTitle:"Videoyu Dışa Aktar",exFormat:"Dosya Formatı",exRes:"Çözünürlük",exQuality:"Kalite",
+  qHigh:"Yüksek",qMedium:"Orta",qLow:"Düşük",cancel:"İptal",exStart:"Kaydı Başlat",
+  exProcMsg:"Video gerçek zamanlı olarak işleniyor. Lütfen bu sekmeyi açık tutun…",
+  preparing:"Hazırlanıyor…",processing:"İşleniyor",stop:"Durdur",exDone:"Video Hazır!",download:"İndir",close:"Kapat",
+  infoDur:"Süre",infoSize:"Boyut",
+  noteWebm:"✅ WebM tüm modern tarayıcılarda desteklenir.",
+  noteMp4Ok:"✅ Tarayıcınız doğrudan MP4 kaydını destekliyor.",
+  noteMp4No:"⚠️ Tarayıcınız doğrudan MP4 kaydını desteklemiyor. WebM olarak kaydedilip .mp4 uzantısıyla verilecek. En iyi MP4 desteği için Chrome 130+ veya Safari kullanın.",
+  mp4Fallback:"Not: Tarayıcı gerçek MP4 üretemediği için içerik WebM olarak kodlandı (.mp4 uzantısıyla).",
+  confirmNew:"Yeni projeye başlansın mı? Mevcut çalışma silinecek.",
+  unsupported:"Desteklenmeyen dosya türü",musicAdded:"Arka plan müziği eklendi",addFirst:"Önce zaman çizelgesine sahne ekleyin",
+  videoReady:"Video hazır!",saved:"Proje kaydedildi",loaded:"Proje yüklendi",loadErr:"Proje dosyası yüklenemedi",
+  playTip:"Oynat / Duraklat",startTip:"Başa dön",hintCanvas:"🎬 Medya ekleyip sahneleri zaman çizelgesine dizin"},
+
+ zh:{subtitle:"HTML5 视频工作室",neww:"新建",save:"保存",load:"打开",export:"导出视频",
+  mediaLib:"媒体库",import:"导入媒体",addTitle:"添加标题卡",tabImages:"图像",tabAudio:"音频",
+  emptyImages:"导入图像或视频文件，然后按 + 添加到时间轴。",
+  emptyAudio:"导入音频文件作为背景音乐。",
+  photo:"照片",video:"视频",title:"标题",audioTag:"音频",addTip:"添加到时间轴",removeTip:"移除",
+  timeline:"时间轴",total:"总计",clear:"清空",
+  tlEmptyVideo:"按媒体上的 + 添加场景。",tlEmptyAudio:"添加音频文件作为背景音乐。",
+  props:"属性",noSel:"从时间轴选择一个场景进行编辑。",
+  duration:"时长（秒）",titleText:"标题卡文字",overlayText:"叠加文字（可选）",textPh:"文字…",
+  textPos:"文字位置",posTop:"顶部",posCenter:"居中",posBottom:"底部",fontSize:"字体大小",
+  textColor:"文字颜色",bgColor:"背景颜色",fit:"适配",fitContain:"适应",fitCover:"填充",
+  filter:"滤镜",fNone:"无",fGray:"灰度",fSepia:"棕褐",fBright:"明亮",fContrast:"对比度",fBlur:"模糊",fVintage:"复古",
+  kenBurns:"缓慢缩放 (Ken Burns)",transition:"到下一场景的转场",transDur:"转场时长",
+  trNone:"无",trFade:"交叉淡化",trFadeBlack:"黑场过渡",trSlideL:"向左滑动",trSlideR:"向右滑动",
+  trSlideU:"向上滑动",trSlideD:"向下滑动",trWipeL:"向左擦除",trWipeR:"向右擦除",trZoom:"缩放",trCircle:"圆形展开",
+  openClose:"开场 / 收场（到黑）",fadeIn:"淡入",fadeOut:"淡出",trimStart:"裁剪起点（秒）",
+  moveLeft:"向左移动",moveRight:"向右移动",delClip:"删除场景",
+  exTitle:"导出视频",exFormat:"文件格式",exRes:"分辨率",exQuality:"质量",
+  qHigh:"高",qMedium:"中",qLow:"低",cancel:"取消",exStart:"开始录制",
+  exProcMsg:"视频正在实时渲染。请保持此标签页打开…",
+  preparing:"准备中…",processing:"处理中",stop:"停止",exDone:"视频已就绪！",download:"下载",close:"关闭",
+  infoDur:"时长",infoSize:"大小",
+  noteWebm:"✅ 所有现代浏览器都支持 WebM。",
+  noteMp4Ok:"✅ 您的浏览器支持直接录制 MP4。",
+  noteMp4No:"⚠️ 您的浏览器无法直接录制 MP4。将以 WebM 保存并使用 .mp4 扩展名。为获得最佳 MP4 支持，请使用 Chrome 130+ 或 Safari。",
+  mp4Fallback:"注意：浏览器无法生成真正的 MP4，因此内容以 WebM 编码（扩展名为 .mp4）。",
+  confirmNew:"开始新项目？当前工作将被清除。",
+  unsupported:"不支持的文件类型",musicAdded:"已添加背景音乐",addFirst:"请先添加场景",
+  videoReady:"视频已就绪！",saved:"项目已保存",loaded:"项目已加载",loadErr:"无法加载项目文件",
+  playTip:"播放 / 暂停",startTip:"回到开头",hintCanvas:"🎬 添加媒体并在时间轴上排列场景"},
+
+ ja:{subtitle:"HTML5 ビデオスタジオ",neww:"新規",save:"保存",load:"開く",export:"動画を書き出す",
+  mediaLib:"メディアライブラリ",import:"メディアを読み込む",addTitle:"タイトルカードを追加",tabImages:"画像",tabAudio:"音声",
+  emptyImages:"画像や動画ファイルを読み込み、+ を押してタイムラインに追加します。",
+  emptyAudio:"BGM として使う音声ファイルを読み込みます。",
+  photo:"写真",video:"動画",title:"タイトル",audioTag:"音声",addTip:"タイムラインに追加",removeTip:"削除",
+  timeline:"タイムライン",total:"合計",clear:"クリア",
+  tlEmptyVideo:"メディアの + を押してシーンを追加します。",tlEmptyAudio:"BGM 用の音声ファイルを追加します。",
+  props:"プロパティ",noSel:"編集するシーンをタイムラインから選択してください。",
+  duration:"長さ（秒）",titleText:"タイトルカードのテキスト",overlayText:"オーバーレイテキスト（任意）",textPh:"テキスト…",
+  textPos:"テキスト位置",posTop:"上",posCenter:"中央",posBottom:"下",fontSize:"フォントサイズ",
+  textColor:"文字色",bgColor:"背景色",fit:"フィット",fitContain:"収める",fitCover:"埋める",
+  filter:"フィルター",fNone:"なし",fGray:"グレースケール",fSepia:"セピア",fBright:"明るく",fContrast:"コントラスト",fBlur:"ぼかし",fVintage:"ビンテージ",
+  kenBurns:"ゆっくりズーム (Ken Burns)",transition:"次のシーンへのトランジション",transDur:"トランジションの長さ",
+  trNone:"なし",trFade:"クロスフェード",trFadeBlack:"黒を経由",trSlideL:"左へスライド",trSlideR:"右へスライド",
+  trSlideU:"上へスライド",trSlideD:"下へスライド",trWipeL:"左ワイプ",trWipeR:"右ワイプ",trZoom:"ズーム",trCircle:"円形",
+  openClose:"オープン / クローズ（黒へ）",fadeIn:"フェードイン",fadeOut:"フェードアウト",trimStart:"トリム開始（秒）",
+  moveLeft:"左へ移動",moveRight:"右へ移動",delClip:"シーンを削除",
+  exTitle:"動画を書き出す",exFormat:"ファイル形式",exRes:"解像度",exQuality:"品質",
+  qHigh:"高",qMedium:"中",qLow:"低",cancel:"キャンセル",exStart:"録画を開始",
+  exProcMsg:"動画はリアルタイムで生成されます。このタブを開いたままにしてください…",
+  preparing:"準備中…",processing:"処理中",stop:"停止",exDone:"動画の準備ができました！",download:"ダウンロード",close:"閉じる",
+  infoDur:"長さ",infoSize:"サイズ",
+  noteWebm:"✅ WebM はすべての最新ブラウザで対応しています。",
+  noteMp4Ok:"✅ お使いのブラウザは MP4 の直接録画に対応しています。",
+  noteMp4No:"⚠️ お使いのブラウザは MP4 を直接録画できません。WebM として .mp4 拡張子で保存されます。最適な MP4 対応には Chrome 130+ または Safari をご利用ください。",
+  mp4Fallback:"注: ブラウザが本物の MP4 を生成できなかったため、内容は WebM でエンコードされました（.mp4 拡張子）。",
+  confirmNew:"新しいプロジェクトを開始しますか？現在の作業は消去されます。",
+  unsupported:"対応していないファイル形式",musicAdded:"BGM を追加しました",addFirst:"先にシーンを追加してください",
+  videoReady:"動画の準備ができました！",saved:"プロジェクトを保存しました",loaded:"プロジェクトを読み込みました",loadErr:"プロジェクトファイルを読み込めませんでした",
+  playTip:"再生 / 一時停止",startTip:"先頭へ",hintCanvas:"🎬 メディアを追加してシーンを並べましょう"}
+};
+
+function t(key){ const l=I18N[state.lang]||I18N.en; return (key in l)? l[key] : (I18N.en[key]||key); }
+
+// ============================================================
+//  STATE & CONSTANTS
+// ============================================================
 const state = {
-  media: [],          // {id,type,url,el,name,duration?}
-  clips: [],          // video track: {id,type,mediaId,duration,trimStart,text,...}
-  audio: null,        // {mediaId,el,volume}
-  selectedClip: null,
-  aspect: '16:9',
-  // oynatma
-  playing:false, time:0, _raf:null, _startWall:0, _startTime:0,
-  _activeVideoEl:null,
+  lang: localStorage.getItem('mm_lang') || 'en',
+  media: [], clips: [], audio: null, selectedClip: null, aspect: '16:9',
+  tab:'images',
+  playing:false, exporting:false, time:0, _raf:null, _startWall:0, _startTime:0,
 };
 let mediaSeq=0, clipSeq=0;
 
 const ASPECTS = { '16:9':[1280,720], '9:16':[720,1280], '1:1':[900,900], '4:3':[960,720] };
 const TEXT_COLORS = ['#ffffff','#000000','#6c8cff','#39d98a','#ffb454','#ff6b6b','#a06cff'];
 const BG_COLORS   = ['#000000','#1e1f2b','#6c8cff','#a06cff','#39d98a','#ff6b6b','#ffb454','#ffffff'];
+const FILTER_KEYS = ['none','grayscale','sepia','bright','contrast','blur','vintage'];
+const FILTER_T = {none:'fNone',grayscale:'fGray',sepia:'fSepia',bright:'fBright',contrast:'fContrast',blur:'fBlur',vintage:'fVintage'};
+const FILTERS = {
+  none:'none', grayscale:'grayscale(1)', sepia:'sepia(0.85)',
+  bright:'brightness(1.3) saturate(1.1)', contrast:'contrast(1.4)',
+  blur:'blur(4px)', vintage:'sepia(0.4) contrast(1.1) saturate(1.3) brightness(1.05)'
+};
+const TRANSITION_KEYS = ['none','fade','fadeblack','slideleft','slideright','slideup','slidedown','wipeleft','wiperight','zoom','circle'];
+const TRANSITION_T = {none:'trNone',fade:'trFade',fadeblack:'trFadeBlack',slideleft:'trSlideL',slideright:'trSlideR',
+  slideup:'trSlideU',slidedown:'trSlideD',wipeleft:'trWipeL',wiperight:'trWipeR',zoom:'trZoom',circle:'trCircle'};
 
 // ============================================================
-//  MEDYA İÇE AKTARMA
+//  LANGUAGE APPLY
 // ============================================================
+function buildLangSelect(){
+  const sel=$('#langSel');
+  sel.innerHTML=LANGS.map(l=>`<option value="${l.code}">${l.name}</option>`).join('');
+  sel.value=state.lang;
+  sel.onchange=()=>{ state.lang=sel.value; localStorage.setItem('mm_lang',state.lang); applyLang(); };
+}
+function setTxt(id,key){ const e=document.getElementById(id); if(e) e.textContent=t(key); }
+function applyLang(){
+  document.documentElement.lang=state.lang;
+  document.body.setAttribute('dir', state.lang==='ar'?'rtl':'ltr');
+  setTxt('t_subtitle','subtitle'); setTxt('t_new','neww'); setTxt('t_save','save'); setTxt('t_load','load');
+  setTxt('t_export','export'); setTxt('t_mediaLib','mediaLib'); setTxt('t_import','import'); setTxt('t_addTitle','addTitle');
+  setTxt('t_tabImages','tabImages'); setTxt('t_tabAudio','tabAudio'); setTxt('t_timeline','timeline');
+  setTxt('t_clear','clear'); setTxt('t_props','props');
+  setTxt('t_exTitle','exTitle'); setTxt('t_exFormat','exFormat'); setTxt('t_exRes','exRes'); setTxt('t_exQuality','exQuality');
+  setTxt('t_exStart','exStart'); setTxt('t_exProcMsg','exProcMsg'); setTxt('t_exDone','exDone');
+  setTxt('t_exDownload','download');
+  $('#exportCancel').textContent=t('cancel'); $('#exportClose').textContent=t('close'); $('#exportStop').textContent=t('stop');
+  $('#playBtn').title=t('playTip'); $('#toStartBtn').title=t('startTip');
+  // quality select
+  const q=$('#qualitySelect'); const qv=q.value||'5000000';
+  q.innerHTML=`<option value="8000000">${t('qHigh')}</option><option value="5000000">${t('qMedium')}</option><option value="2500000">${t('qLow')}</option>`;
+  q.value=qv;
+  buildLangSelectValue();
+  renderMedia(); renderTimeline(); renderInspector(); updateFmtNote(); updateTimeUI();
+  renderFrame();
+}
+function buildLangSelectValue(){ const s=$('#langSel'); if(s) s.value=state.lang; }
+
+// ============================================================
+//  MEDIA IMPORT  (base64 for images/video, uint8array for audio)
+// ============================================================
+const readDataURL = file => new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); });
+
 $('#importBtn').onclick = ()=> $('#fileInput').click();
-$('#fileInput').onchange = e => { [...e.target.files].forEach(addMediaFile); e.target.value=''; };
+$('#fileInput').onchange = async e => { for(const f of e.target.files) await addMediaFile(f); e.target.value=''; };
 
-function addMediaFile(file){
-  const url = URL.createObjectURL(file);
+async function addMediaFile(file){
   const type = file.type.startsWith('image') ? 'image'
              : file.type.startsWith('video') ? 'video'
              : file.type.startsWith('audio') ? 'audio' : null;
-  if(!type){ toast('Desteklenmeyen dosya türü'); return; }
-  const m = { id:++mediaSeq, type, url, name:file.name, el:null, duration:4 };
+  if(!type){ toast(t('unsupported')); return; }
+  const m = { id:++mediaSeq, type, name:file.name, mime:file.type, duration:4, el:null };
 
-  if(type==='image'){
-    const img=new Image(); img.src=url; img.onload=()=>renderMedia(); m.el=img;
-    state.media.push(m); renderMedia();
-  } else {
-    const el=document.createElement(type==='video'?'video':'audio');
-    el.src=url; el.preload='auto'; el.muted = (type==='video'); // ön izlemede video sesini kısık tut
-    el.onloadedmetadata=()=>{ m.duration = el.duration||4; renderMedia(); };
-    m.el=el; state.media.push(m); renderMedia();
+  if(type==='image' || type==='video'){
+    const dataUrl = await readDataURL(file);     // base64
+    m.dataUrl = dataUrl; m.url = dataUrl;
+    buildMediaElement(m);
+  } else { // audio -> uint8array
+    const buf = await file.arrayBuffer();
+    m.bytes = new Uint8Array(buf);
+    const blob = new Blob([m.bytes], { type:file.type });
+    m.url = URL.createObjectURL(blob);
+    buildMediaElement(m);
+  }
+  state.media.push(m); renderMedia();
+}
+
+function buildMediaElement(m){
+  if(m.type==='image'){
+    const img=new Image(); img.src=m.url; img.onload=()=>renderMedia(); m.el=img;
+  } else if(m.type==='video'){
+    const v=document.createElement('video'); v.src=m.url; v.preload='auto'; v.muted=true;
+    v.onloadedmetadata=()=>{ m.mediaDur=v.duration||4; renderMedia(); }; m.el=v;
+  } else if(m.type==='audio'){
+    const a=document.createElement('audio'); a.src=m.url; a.preload='auto';
+    a.onloadedmetadata=()=>{ m.mediaDur=a.duration||4; renderMedia(); }; m.el=a;
   }
 }
 
 $('#addTitleBtn').onclick = ()=>{
   const id=++mediaSeq;
-  state.media.push({ id, type:'title', name:'Yazı Kartı', el:null, duration:3 });
-  renderMedia();
-  // doğrudan zaman çizelgesine de ekle
-  addClipFromMedia(id);
+  state.media.push({ id, type:'title', name:t('title'), el:null, duration:3 });
+  renderMedia(); addClipFromMedia(id);
 };
 
+// ---- Media tabs ----
+$('#tabImagesBtn').onclick=()=>switchTab('images');
+$('#tabAudioBtn').onclick=()=>switchTab('audio');
+function switchTab(tab){
+  state.tab=tab;
+  $('#tabImagesBtn').classList.toggle('on',tab==='images');
+  $('#tabAudioBtn').classList.toggle('on',tab==='audio');
+  $('#mediaListImages').hidden = tab!=='images';
+  $('#mediaListAudio').hidden = tab!=='audio';
+}
+
 function renderMedia(){
-  const list=$('#mediaList');
-  if(state.media.length===0){
-    list.innerHTML='<div class="empty-hint">Görsel, video veya ses dosyalarını içe aktarın.<br>Ardından <b>+</b> ile zaman çizelgesine ekleyin.</div>';
-    return;
+  const imgs=state.media.filter(m=>m.type!=='audio');
+  const auds=state.media.filter(m=>m.type==='audio');
+  const li=$('#mediaListImages'), la=$('#mediaListAudio');
+  // images / videos / titles
+  if(!imgs.length){ li.innerHTML=`<div class="empty-hint">${t('emptyImages')}</div>`; }
+  else{
+    li.innerHTML='';
+    imgs.forEach(m=>{
+      const d=document.createElement('div'); d.className='media-item';
+      let inner='';
+      if(m.type==='image') inner=`<img src="${m.url}">`;
+      else if(m.type==='video') inner=`<video src="${m.url}" muted></video>`;
+      else inner=`<div class="ic"><i class="fa-solid fa-font"></i></div>`;
+      const tag = m.type==='image'?t('photo'):m.type==='video'?t('video'):t('title');
+      d.innerHTML=inner+`<span class="tag">${tag}</span><span class="name">${m.name}</span>`+
+        `<button class="rm" title="${t('removeTip')}"><i class="fa-solid fa-xmark"></i></button>`+
+        `<button class="add" title="${t('addTip')}">+</button>`;
+      d.querySelector('.add').onclick=()=>addClipFromMedia(m.id);
+      d.querySelector('.rm').onclick=()=>removeMedia(m.id);
+      li.appendChild(d);
+    });
   }
-  list.innerHTML='';
-  state.media.forEach(m=>{
-    const d=document.createElement('div'); d.className='media-item';
-    let inner='';
-    if(m.type==='image') inner=`<img src="${m.url}">`;
-    else if(m.type==='video') inner=`<video src="${m.url}" muted></video>`;
-    else if(m.type==='audio') inner=`<div class="ic"><i class="fa-solid fa-music"></i></div>`;
-    else if(m.type==='title') inner=`<div class="ic"><i class="fa-solid fa-font"></i></div>`;
-    d.innerHTML = inner +
-      `<span class="tag">${ {image:'Foto',video:'Video',audio:'Ses',title:'Yazı'}[m.type] }</span>`+
-      `<span class="name">${m.name}</span>`+
-      `<button class="add" title="Zaman çizelgesine ekle">+</button>`;
-    d.querySelector('.add').onclick = ()=> addClipFromMedia(m.id);
-    list.appendChild(d);
-  });
+  // audio
+  if(!auds.length){ la.innerHTML=`<div class="empty-hint">${t('emptyAudio')}</div>`; }
+  else{
+    la.innerHTML='';
+    auds.forEach(m=>{
+      const d=document.createElement('div'); d.className='media-item audio-item';
+      d.innerHTML=`<span class="ic"><i class="fa-solid fa-music"></i></span><span class="an">${m.name}</span>`+
+        `<button class="add" title="${t('addTip')}">+</button>`;
+      d.querySelector('.add').onclick=()=>addClipFromMedia(m.id);
+      la.appendChild(d);
+    });
+  }
+}
+function removeMedia(id){
+  // also remove clips using it
+  state.clips=state.clips.filter(c=>c.mediaId!==id);
+  if(state.audio && state.audio.mediaId===id) state.audio=null;
+  state.media=state.media.filter(m=>m.id!==id);
+  renderMedia(); renderTimeline(); renderInspector(); seek(Math.min(state.time,totalDuration()));
 }
 
 // ============================================================
-//  ZAMAN ÇİZELGESİ
+//  TIMELINE
 // ============================================================
 function addClipFromMedia(mediaId){
-  const m=state.media.find(x=>x.id===mediaId); if(!m) return;
-  if(m.type==='audio'){
-    state.audio = { mediaId, el:m.el, volume:1 };
-    toast('Arka plan müziği eklendi');
-    renderTimeline();
-    return;
-  }
-  const clip = {
+  const m=mediaById(mediaId); if(!m) return;
+  if(m.type==='audio'){ state.audio={ mediaId, el:m.el, volume:1 }; toast(t('musicAdded')); renderTimeline(); switchTab('audio'); return; }
+  const clip={
     id:++clipSeq, type:m.type, mediaId,
-    duration: m.type==='video' ? Math.min(m.duration||4, m.duration||4) : (m.type==='title'?3:4),
-    trimStart:0,
-    text: m.type==='title' ? 'Başlığınız' : '',
+    duration: m.type==='video' ? Math.min(m.mediaDur||4,30) : (m.type==='title'?3:4),
+    trimStart:0, text: m.type==='title'?'Title':'',
     textColor:'#ffffff', textPos:'center', fontSize:64,
-    bgColor: m.type==='title' ? '#1e1f2b' : '#000000',
+    bgColor: m.type==='title'?'#1e1f2b':'#000000',
     fit:'contain', filter:'none', fadeIn:false, fadeOut:false,
-    kenBurns: m.type==='image',
+    kenBurns: m.type==='image', transition:'none', transDur:0.7,
   };
-  state.clips.push(clip);
-  selectClip(clip.id);
-  renderTimeline();
-  seek(0);
+  state.clips.push(clip); selectClip(clip.id); renderTimeline(); switchTab('images'); seek(state.time);
 }
 
 function totalDuration(){ return state.clips.reduce((s,c)=>s+c.duration,0); }
 
+let dragId=null;
 function renderTimeline(){
   const vt=$('#videoTrack'), at=$('#audioTrack');
-  // video parçası
-  if(state.clips.length===0){
-    vt.innerHTML='<div class="tl-empty">Sahne eklemek için soldaki medyalardan <b>+</b>\'a basın.</div>';
+  if(!state.clips.length){
+    vt.innerHTML=`<div class="tl-empty">${t('tlEmptyVideo')}</div>`;
   } else {
     vt.innerHTML='';
-    state.clips.forEach(c=>{
-      const m=state.media.find(x=>x.id===c.mediaId);
+    state.clips.forEach((c,idx)=>{
+      const m=mediaById(c.mediaId);
       const el=document.createElement('div');
       el.className='clip'+(state.selectedClip===c.id?' sel':'');
-      el.style.width = Math.max(70, c.duration*22)+'px';
+      el.style.width=Math.max(72,c.duration*22)+'px';
+      el.draggable=true; el.dataset.id=c.id;
       let thumb='';
-      if(c.type==='image' && m) thumb=`<img src="${m.url}">`;
-      else if(c.type==='video' && m) thumb=`<video src="${m.url}" muted></video>`;
+      if(c.type==='image'&&m) thumb=`<img src="${m.url}">`;
+      else if(c.type==='video'&&m) thumb=`<video src="${m.url}" muted></video>`;
       else thumb=`<div class="ci" style="background:${c.bgColor}"><i class="fa-solid fa-font"></i></div>`;
-      el.innerHTML = thumb +
-        `<span class="lbl">${c.type==='title'?(c.text||'Yazı'):(m?m.name:'')}</span>`+
-        `<span class="dur">${c.duration.toFixed(1)}s</span>`+
-        `<button class="del"><i class="fa-solid fa-xmark"></i></button>`;
-      el.onclick = e=>{ if(e.target.closest('.del')) return; selectClip(c.id); };
-      el.querySelector('.del').onclick = e=>{ e.stopPropagation(); deleteClip(c.id); };
+      const transBadge = c.transition && c.transition!=='none' ? `<span class="trans-badge"><i class="fa-solid fa-wand-magic-sparkles"></i></span>` : '';
+      el.innerHTML=thumb+
+        `<button class="mv l" title="${t('moveLeft')}"><i class="fa-solid fa-chevron-left"></i></button>`+
+        `<button class="mv r" title="${t('moveRight')}"><i class="fa-solid fa-chevron-right"></i></button>`+
+        `<span class="lbl">${c.type==='title'?(c.text||t('title')):(m?m.name:'')}</span>`+
+        `<span class="dur">${c.duration.toFixed(1)}s</span>`+ transBadge +
+        `<button class="del" title="${t('delClip')}"><i class="fa-solid fa-xmark"></i></button>`;
+      el.onclick=e=>{ if(e.target.closest('.del')||e.target.closest('.mv')) return; selectClip(c.id); };
+      el.querySelector('.del').onclick=e=>{ e.stopPropagation(); deleteClip(c.id); };
+      el.querySelector('.mv.l').onclick=e=>{ e.stopPropagation(); moveClip(c.id,-1); };
+      el.querySelector('.mv.r').onclick=e=>{ e.stopPropagation(); moveClip(c.id,1); };
+      // drag reorder
+      el.ondragstart=e=>{ dragId=c.id; el.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; };
+      el.ondragend=()=>{ el.classList.remove('dragging'); document.querySelectorAll('.clip.dragover').forEach(x=>x.classList.remove('dragover')); };
+      el.ondragover=e=>{ e.preventDefault(); el.classList.add('dragover'); };
+      el.ondragleave=()=>el.classList.remove('dragover');
+      el.ondrop=e=>{ e.preventDefault(); el.classList.remove('dragover'); reorderClip(dragId,c.id); };
       vt.appendChild(el);
     });
   }
-  // ses parçası
   if(!state.audio){
-    at.innerHTML='<div class="tl-empty">Arka plan müziği için ses dosyası ekleyin.</div>';
+    at.innerHTML=`<div class="tl-empty">${t('tlEmptyAudio')}</div>`;
   } else {
-    const m=state.media.find(x=>x.id===state.audio.mediaId);
+    const m=mediaById(state.audio.mediaId);
     at.innerHTML='';
-    const el=document.createElement('div');
-    el.className='clip audio-clip';
-    el.style.width=Math.max(120, (m?.duration||totalDuration())*22)+'px';
-    el.innerHTML=`<i class="fa-solid fa-music"></i><span>${m?m.name:'Müzik'}</span><button class="del"><i class="fa-solid fa-xmark"></i></button>`;
+    const el=document.createElement('div'); el.className='clip audio-clip';
+    el.style.width=Math.max(120,(m?.mediaDur||totalDuration()||6)*22)+'px';
+    el.innerHTML=`<i class="fa-solid fa-music"></i><span>${m?m.name:'Audio'}</span><button class="del">×</button>`;
     el.querySelector('.del').onclick=()=>{ state.audio=null; renderTimeline(); };
     at.appendChild(el);
   }
-  $('#tlTotal').textContent='Toplam: '+totalDuration().toFixed(1)+'s';
+  $('#tlTotal').textContent=t('total')+': '+totalDuration().toFixed(1)+'s';
   updateTimeUI();
 }
 
+function moveClip(id,dir){
+  const i=state.clips.findIndex(c=>c.id===id); const j=i+dir;
+  if(i<0||j<0||j>=state.clips.length) return;
+  [state.clips[i],state.clips[j]]=[state.clips[j],state.clips[i]];
+  renderTimeline(); seek(state.time);
+}
+function reorderClip(srcId,destId){
+  if(srcId==null||srcId===destId) return;
+  const src=state.clips.find(c=>c.id===srcId); if(!src) return;
+  state.clips=state.clips.filter(c=>c.id!==srcId);
+  const di=state.clips.findIndex(c=>c.id===destId);
+  state.clips.splice(di<0?state.clips.length:di,0,src);
+  renderTimeline(); seek(state.time);
+}
 function deleteClip(id){
   state.clips=state.clips.filter(c=>c.id!==id);
   if(state.selectedClip===id){ state.selectedClip=null; renderInspector(); }
-  renderTimeline(); seek(Math.min(state.time, totalDuration()));
+  renderTimeline(); seek(Math.min(state.time,totalDuration()));
 }
-
 $('#clearTlBtn').onclick=()=>{
-  if(!state.clips.length && !state.audio) return;
+  if(!state.clips.length&&!state.audio) return;
   state.clips=[]; state.audio=null; state.selectedClip=null;
   renderInspector(); renderTimeline(); pause(); seek(0);
 };
 
 // ============================================================
-//  ÖZELLİKLER PANELİ (INSPECTOR)
+//  INSPECTOR
 // ============================================================
 function selectClip(id){ state.selectedClip=id; renderTimeline(); renderInspector(); }
 
 function renderInspector(){
   const box=$('#inspector');
   const c=state.clips.find(x=>x.id===state.selectedClip);
-  if(!c){ box.innerHTML='<div class="no-sel">Düzenlemek için zaman çizelgesinden bir sahne seçin.</div>'; return; }
-  const m=state.media.find(x=>x.id===c.mediaId);
+  if(!c){ box.innerHTML=`<div class="no-sel">${t('noSel')}</div>`; return; }
+  const m=mediaById(c.mediaId);
   let html='';
-
-  // Süre
-  html+=`<div class="field"><label>Süre (saniye)</label>
-    <div class="row"><input type="range" id="f_dur" min="0.5" max="20" step="0.5" value="${c.duration}">
+  html+=`<div class="field"><label>${t('duration')}</label>
+    <div class="row"><input type="range" id="f_dur" min="0.5" max="30" step="0.5" value="${c.duration}">
     <span id="f_dur_v" style="min-width:42px;text-align:right">${c.duration.toFixed(1)}s</span></div></div>`;
-
-  // Başlık/yazı kartı metni (her sahne için metin katmanı)
-  html+=`<div class="field"><label>${c.type==='title'?'Yazı Kartı Metni':'Üst Yazı (boş bırakılabilir)'}</label>
-    <textarea id="f_text" placeholder="Metin...">${c.text||''}</textarea></div>`;
-
-  if(c.text || c.type==='title'){
-    html+=`<div class="field"><label>Yazı Konumu</label>
-      <div class="seg" id="f_pos">
-        <button data-v="top" class="${c.textPos==='top'?'on':''}">Üst</button>
-        <button data-v="center" class="${c.textPos==='center'?'on':''}">Orta</button>
-        <button data-v="bottom" class="${c.textPos==='bottom'?'on':''}">Alt</button>
-      </div></div>`;
-    html+=`<div class="field"><label>Yazı Boyutu</label>
-      <div class="row"><input type="range" id="f_fs" min="20" max="140" value="${c.fontSize}">
+  html+=`<div class="field"><label>${c.type==='title'?t('titleText'):t('overlayText')}</label>
+    <textarea id="f_text" placeholder="${t('textPh')}">${c.text||''}</textarea></div>`;
+  if(c.text||c.type==='title'){
+    html+=`<div class="field"><label>${t('textPos')}</label><div class="seg" id="f_pos">
+      <button data-v="top" class="${c.textPos==='top'?'on':''}">${t('posTop')}</button>
+      <button data-v="center" class="${c.textPos==='center'?'on':''}">${t('posCenter')}</button>
+      <button data-v="bottom" class="${c.textPos==='bottom'?'on':''}">${t('posBottom')}</button></div></div>`;
+    html+=`<div class="field"><label>${t('fontSize')}</label><div class="row">
+      <input type="range" id="f_fs" min="20" max="140" value="${c.fontSize}">
       <span style="min-width:34px;text-align:right" id="f_fs_v">${c.fontSize}</span></div></div>`;
-    html+=`<div class="field"><label>Yazı Rengi</label><div class="swatches" id="f_tc">`+
+    html+=`<div class="field"><label>${t('textColor')}</label><div class="swatches" id="f_tc">`+
       TEXT_COLORS.map(col=>`<div class="swatch ${c.textColor===col?'sel':''}" data-c="${col}" style="background:${col}"></div>`).join('')+`</div></div>`;
   }
-
   if(c.type==='title'){
-    html+=`<div class="field"><label>Arka Plan Rengi</label><div class="swatches" id="f_bg">`+
+    html+=`<div class="field"><label>${t('bgColor')}</label><div class="swatches" id="f_bg">`+
       BG_COLORS.map(col=>`<div class="swatch ${c.bgColor===col?'sel':''}" data-c="${col}" style="background:${col}"></div>`).join('')+`</div></div>`;
   }
-
   if(c.type==='image'||c.type==='video'){
-    html+=`<div class="field"><label>Sığdırma</label>
-      <div class="seg" id="f_fit">
-        <button data-v="contain" class="${c.fit==='contain'?'on':''}">Sığdır</button>
-        <button data-v="cover" class="${c.fit==='cover'?'on':''}">Doldur</button>
-      </div></div>`;
-    html+=`<div class="field"><label>Filtre</label>
-      <select id="f_filter">
-        ${['none','grayscale','sepia','bright','contrast','blur','vintage'].map(f=>`<option value="${f}" ${c.filter===f?'selected':''}>${ {none:'Yok',grayscale:'Siyah-Beyaz',sepia:'Sepya',bright:'Parlak',contrast:'Kontrast',blur:'Bulanık',vintage:'Vintage'}[f] }</option>`).join('')}
-      </select></div>`;
+    html+=`<div class="field"><label>${t('fit')}</label><div class="seg" id="f_fit">
+      <button data-v="contain" class="${c.fit==='contain'?'on':''}">${t('fitContain')}</button>
+      <button data-v="cover" class="${c.fit==='cover'?'on':''}">${t('fitCover')}</button></div></div>`;
+    html+=`<div class="field"><label>${t('filter')}</label><select id="f_filter">`+
+      FILTER_KEYS.map(f=>`<option value="${f}" ${c.filter===f?'selected':''}>${t(FILTER_T[f])}</option>`).join('')+`</select></div>`;
     if(c.type==='image')
-      html+=`<div class="field"><label class="row" style="text-transform:none"><input type="checkbox" id="f_kb" ${c.kenBurns?'checked':''} style="width:auto;margin-right:8px"> Yavaş yakınlaşma (Ken Burns)</label></div>`;
+      html+=`<div class="field"><label class="row" style="text-transform:none;color:var(--text)"><input type="checkbox" id="f_kb" ${c.kenBurns?'checked':''} style="width:auto;margin-right:8px"> ${t('kenBurns')}</label></div>`;
   }
-
-  // Geçişler
-  html+=`<div class="field"><label>Geçiş Efekti</label>
-    <div class="row" style="gap:14px">
-      <label style="text-transform:none;color:var(--text)"><input type="checkbox" id="f_fi" ${c.fadeIn?'checked':''} style="width:auto;margin-right:6px">Açılış</label>
-      <label style="text-transform:none;color:var(--text)"><input type="checkbox" id="f_fo" ${c.fadeOut?'checked':''} style="width:auto;margin-right:6px">Kapanış</label>
-    </div></div>`;
-
+  // transition to next scene
+  html+=`<div class="field"><label>${t('transition')}</label><select id="f_trans">`+
+    TRANSITION_KEYS.map(tr=>`<option value="${tr}" ${(c.transition||'none')===tr?'selected':''}>${t(TRANSITION_T[tr])}</option>`).join('')+`</select></div>`;
+  if((c.transition||'none')!=='none'){
+    html+=`<div class="field"><label>${t('transDur')}</label><div class="row">
+      <input type="range" id="f_td" min="0.2" max="2" step="0.1" value="${c.transDur||0.7}">
+      <span style="min-width:42px;text-align:right" id="f_td_v">${(c.transDur||0.7).toFixed(1)}s</span></div></div>`;
+  }
+  // open/close fades
+  html+=`<div class="field"><label>${t('openClose')}</label><div class="row" style="gap:14px">
+    <label style="text-transform:none;color:var(--text)"><input type="checkbox" id="f_fi" ${c.fadeIn?'checked':''} style="width:auto;margin-right:6px">${t('fadeIn')}</label>
+    <label style="text-transform:none;color:var(--text)"><input type="checkbox" id="f_fo" ${c.fadeOut?'checked':''} style="width:auto;margin-right:6px">${t('fadeOut')}</label></div></div>`;
   if(c.type==='video'){
-    html+=`<div class="field"><label>Kırpma Başlangıcı (s)</label>
-      <input type="number" id="f_trim" min="0" max="${(m?.duration||0).toFixed(1)}" step="0.5" value="${c.trimStart}"></div>`;
+    html+=`<div class="field"><label>${t('trimStart')}</label>
+      <input type="number" id="f_trim" min="0" max="${(m?.mediaDur||0).toFixed(1)}" step="0.5" value="${c.trimStart}"></div>`;
   }
-
-  box.innerHTML=html;
-  wireInspector(c);
+  box.innerHTML=html; wireInspector(c);
 }
 
 function wireInspector(c){
@@ -487,402 +956,386 @@ function wireInspector(c){
   on('f_fs','input',e=>{ c.fontSize=+e.target.value; $('#f_fs_v').textContent=c.fontSize; seek(state.time); });
   on('f_filter','change',e=>{ c.filter=e.target.value; seek(state.time); });
   on('f_kb','change',e=>{ c.kenBurns=e.target.checked; seek(state.time); });
-  on('f_fi','change',e=>{ c.fadeIn=e.target.checked; });
-  on('f_fo','change',e=>{ c.fadeOut=e.target.checked; });
+  on('f_trans','change',e=>{ c.transition=e.target.value; renderInspector(); renderTimeline(); seek(state.time); });
+  on('f_td','input',e=>{ c.transDur=+e.target.value; $('#f_td_v').textContent=c.transDur.toFixed(1)+'s'; seek(state.time); });
+  on('f_fi','change',e=>{ c.fadeIn=e.target.checked; seek(state.time); });
+  on('f_fo','change',e=>{ c.fadeOut=e.target.checked; seek(state.time); });
   on('f_trim','input',e=>{ c.trimStart=+e.target.value; seek(state.time); });
-  const seg=(id,fn)=>{ const wrap=$('#'+id); if(!wrap)return; wrap.querySelectorAll('button').forEach(b=>b.onclick=()=>{ wrap.querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); fn(b.dataset.v); seek(state.time); }); };
+  const seg=(id,fn)=>{ const w=$('#'+id); if(!w)return; w.querySelectorAll('button').forEach(b=>b.onclick=()=>{ w.querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); fn(b.dataset.v); seek(state.time); }); };
   seg('f_pos',v=>c.textPos=v); seg('f_fit',v=>c.fit=v);
-  const sw=(id,fn)=>{ const wrap=$('#'+id); if(!wrap)return; wrap.querySelectorAll('.swatch').forEach(s=>s.onclick=()=>{ wrap.querySelectorAll('.swatch').forEach(x=>x.classList.remove('sel')); s.classList.add('sel'); fn(s.dataset.c); renderTimeline(); seek(state.time); }); };
+  const sw=(id,fn)=>{ const w=$('#'+id); if(!w)return; w.querySelectorAll('.swatch').forEach(s=>s.onclick=()=>{ w.querySelectorAll('.swatch').forEach(x=>x.classList.remove('sel')); s.classList.add('sel'); fn(s.dataset.c); renderTimeline(); seek(state.time); }); };
   sw('f_tc',v=>c.textColor=v); sw('f_bg',v=>c.bgColor=v);
 }
 
 // ============================================================
-//  RENDER ENGINE — belirli bir zamanı canvas'a çiz
+//  RENDER ENGINE (with transitions)
 // ============================================================
-function clipAtTime(t){
+function clipIndexAtTime(t){
+  if(!state.clips.length) return null;
   let acc=0;
-  for(const c of state.clips){
-    if(t < acc+c.duration || c===state.clips[state.clips.length-1])
-      return { clip:c, local:Math.max(0,Math.min(c.duration, t-acc)), start:acc };
+  for(let i=0;i<state.clips.length;i++){
+    const c=state.clips[i];
+    if(t<acc+c.duration || i===state.clips.length-1)
+      return { i, local:Math.max(0,Math.min(c.duration,t-acc)), start:acc };
     acc+=c.duration;
   }
   return null;
 }
 
-const FILTERS = {
-  none:'none', grayscale:'grayscale(1)', sepia:'sepia(0.85)',
-  bright:'brightness(1.3) saturate(1.1)', contrast:'contrast(1.4)',
-  blur:'blur(4px)', vintage:'sepia(0.4) contrast(1.1) saturate(1.3) brightness(1.05)'
-};
-
-function drawClip(c, local){
-  const W=stage.width, H=stage.height;
-  ctx.clearRect(0,0,W,H);
-  // arka plan
-  ctx.fillStyle = c.bgColor||'#000';
-  ctx.fillRect(0,0,W,H);
-
-  const m=state.media.find(x=>x.id===c.mediaId);
-  ctx.filter = FILTERS[c.filter]||'none';
-
-  if(c.type==='image' && m?.el?.complete){
-    drawMediaFit(m.el, c, local);
-  } else if(c.type==='video' && m?.el){
-    if(m.el.readyState>=2) drawMediaFit(m.el, c, local);
-  }
-  ctx.filter='none';
-
-  // metin katmanı
-  if(c.text){
-    drawText(c);
-  }
-
-  // fade geçişleri
-  let alpha=1;
-  const fd=Math.min(0.6, c.duration/2);
-  if(c.fadeIn && local<fd) alpha=local/fd;
-  if(c.fadeOut && local>c.duration-fd) alpha=Math.min(alpha,(c.duration-local)/fd);
-  if(alpha<1){
-    ctx.fillStyle='rgba(0,0,0,'+(1-alpha)+')';
-    ctx.fillRect(0,0,W,H);
-  }
+const _bufs={};
+function getBuf(tag,W,H){
+  const key=tag+W+'x'+H;
+  if(!_bufs[key]){ const cv=document.createElement('canvas'); cv.width=W; cv.height=H; _bufs[key]={canvas:cv,ctx:cv.getContext('2d')}; }
+  return _bufs[key];
 }
 
-function drawMediaFit(el, c, local){
-  const W=stage.width,H=stage.height;
-  const mw = el.videoWidth||el.naturalWidth||el.width;
-  const mh = el.videoHeight||el.naturalHeight||el.height;
+function drawFit(g,W,H,el,c,local){
+  const mw=el.videoWidth||el.naturalWidth, mh=el.videoHeight||el.naturalHeight;
   if(!mw||!mh) return;
-  let scale = c.fit==='cover' ? Math.max(W/mw,H/mh) : Math.min(W/mw,H/mh);
-  // Ken Burns: zamanla %8 yakınlaş
-  if(c.kenBurns && c.type==='image'){
-    const p = c.duration? local/c.duration : 0;
-    scale *= (1 + 0.08*p);
+  let scale=c.fit==='cover'?Math.max(W/mw,H/mh):Math.min(W/mw,H/mh);
+  if(c.kenBurns&&c.type==='image'){ const p=c.duration?local/c.duration:0; scale*=(1+0.08*p); }
+  const dw=mw*scale,dh=mh*scale;
+  g.drawImage(el,(W-dw)/2,(H-dh)/2,dw,dh);
+}
+function drawTextG(g,W,H,c){
+  const fs=c.fontSize*(W/1280);
+  g.font=`700 ${fs}px Inter, Segoe UI, sans-serif`;
+  g.textAlign='center'; g.textBaseline='middle';
+  const lines=(c.text||'').split('\n'); const lh=fs*1.2;
+  let y=c.textPos==='top'?H*0.16:c.textPos==='bottom'?H*0.84-(lines.length-1)*lh:H/2;
+  lines.forEach((ln,i)=>{ const yy=y+i*lh;
+    g.lineWidth=fs*0.12; g.strokeStyle='rgba(0,0,0,.55)'; g.lineJoin='round'; g.strokeText(ln,W/2,yy);
+    g.fillStyle=c.textColor||'#fff'; g.fillText(ln,W/2,yy);
+  });
+}
+function paintClip(g,W,H,c,local){
+  g.save(); g.globalAlpha=1; g.filter='none';
+  g.clearRect(0,0,W,H);
+  g.fillStyle=c.bgColor||'#000'; g.fillRect(0,0,W,H);
+  const m=mediaById(c.mediaId);
+  g.filter=FILTERS[c.filter]||'none';
+  if(c.type==='image'&&m?.el?.complete) drawFit(g,W,H,m.el,c,local);
+  else if(c.type==='video'&&m?.el&&m.el.readyState>=2) drawFit(g,W,H,m.el,c,local);
+  g.filter='none';
+  if(c.text) drawTextG(g,W,H,c);
+  // per-clip open/close (to black)
+  let a=1; const fd=Math.min(0.5,c.duration/2);
+  if(c.fadeIn&&local<fd)a=local/fd;
+  if(c.fadeOut&&local>c.duration-fd)a=Math.min(a,(c.duration-local)/fd);
+  if(a<1){ g.fillStyle='rgba(0,0,0,'+(1-a)+')'; g.fillRect(0,0,W,H); }
+  g.restore();
+}
+function applyTransition(g,W,H,A,B,type,p){
+  g.save(); g.globalAlpha=1; g.filter='none';
+  switch(type){
+    case 'fade': g.drawImage(A,0,0,W,H); g.globalAlpha=p; g.drawImage(B,0,0,W,H); g.globalAlpha=1; break;
+    case 'fadeblack':
+      if(p<0.5){ g.drawImage(A,0,0,W,H); g.fillStyle='rgba(0,0,0,'+(p*2)+')'; g.fillRect(0,0,W,H); }
+      else { g.drawImage(B,0,0,W,H); g.fillStyle='rgba(0,0,0,'+((1-p)*2)+')'; g.fillRect(0,0,W,H); } break;
+    case 'slideleft':  g.drawImage(A,-W*p,0,W,H); g.drawImage(B,W*(1-p),0,W,H); break;
+    case 'slideright': g.drawImage(A,W*p,0,W,H);  g.drawImage(B,-W*(1-p),0,W,H); break;
+    case 'slideup':    g.drawImage(A,0,-H*p,W,H); g.drawImage(B,0,H*(1-p),W,H); break;
+    case 'slidedown':  g.drawImage(A,0,H*p,W,H);  g.drawImage(B,0,-H*(1-p),W,H); break;
+    case 'wipeleft':   g.drawImage(A,0,0,W,H); g.beginPath(); g.rect(0,0,W*p,H); g.clip(); g.drawImage(B,0,0,W,H); break;
+    case 'wiperight':  g.drawImage(A,0,0,W,H); g.beginPath(); g.rect(W*(1-p),0,W*p,H); g.clip(); g.drawImage(B,0,0,W,H); break;
+    case 'zoom':       g.drawImage(A,0,0,W,H); { const dw=W*p,dh=H*p; g.globalAlpha=p; g.drawImage(B,(W-dw)/2,(H-dh)/2,dw,dh); } break;
+    case 'circle':     g.drawImage(A,0,0,W,H); g.beginPath(); g.arc(W/2,H/2,Math.hypot(W,H)/2*p,0,Math.PI*2); g.clip(); g.drawImage(B,0,0,W,H); break;
+    default: g.drawImage(B,0,0,W,H);
   }
-  const dw=mw*scale, dh=mh*scale;
-  ctx.drawImage(el, (W-dw)/2, (H-dh)/2, dw, dh);
+  g.restore();
+}
+function composeFrame(octx,W,H,time){
+  octx.globalAlpha=1; octx.filter='none';
+  octx.fillStyle='#000'; octx.fillRect(0,0,W,H);
+  const info=clipIndexAtTime(time); if(!info) return;
+  const c=state.clips[info.i], local=info.local, next=state.clips[info.i+1];
+  const tdur=Math.min(c.transDur||0.7, c.duration*0.6);
+  const trans=c.transition||'none';
+  if(next && trans!=='none' && local>c.duration-tdur){
+    const p=(local-(c.duration-tdur))/tdur;
+    const A=getBuf('A',W,H), B=getBuf('B',W,H);
+    paintClip(A.ctx,W,H,c,local);
+    paintClip(B.ctx,W,H,next,0.0001);
+    applyTransition(octx,W,H,A.canvas,B.canvas,trans,Math.max(0,Math.min(1,p)));
+  } else {
+    paintClip(octx,W,H,c,local);
+  }
 }
 
-function drawText(c){
-  const W=stage.width,H=stage.height;
-  const fs = c.fontSize * (W/1280);
-  ctx.font=`700 ${fs}px Inter, Segoe UI, sans-serif`;
-  ctx.textAlign='center'; ctx.textBaseline='middle';
-  const lines=(c.text||'').split('\n');
-  const lh=fs*1.2;
-  let y = c.textPos==='top'? H*0.16 : c.textPos==='bottom'? H*0.84 - (lines.length-1)*lh : H/2;
-  lines.forEach((ln,i)=>{
-    const yy=y+i*lh;
-    ctx.lineWidth=fs*0.12; ctx.strokeStyle='rgba(0,0,0,.55)';
-    ctx.lineJoin='round'; ctx.strokeText(ln, W/2, yy);
-    ctx.fillStyle=c.textColor||'#fff'; ctx.fillText(ln, W/2, yy);
-  });
+function manageVideos(time){
+  const live=state.playing||state.exporting;
+  const info=clipIndexAtTime(time);
+  const activeIds=new Set();
+  if(info){
+    const c=state.clips[info.i];
+    if(c.type==='video') activeIds.add(c.mediaId);
+    const next=state.clips[info.i+1];
+    if(next){ const tdur=Math.min(c.transDur||0.7,c.duration*0.6);
+      if((c.transition||'none')!=='none' && info.local>c.duration-tdur && next.type==='video') activeIds.add(next.mediaId); }
+  }
+  state.media.forEach(m=>{ if(m.type==='video'&&m.el&&!activeIds.has(m.id)&&!m.el.paused) m.el.pause(); });
+  if(info){
+    const c=state.clips[info.i];
+    if(c.type==='video'){ const m=mediaById(c.mediaId);
+      if(m?.el){ const tg=c.trimStart+info.local;
+        if(live){ if(m.el.paused) m.el.play().catch(()=>{}); if(Math.abs(m.el.currentTime-tg)>0.35) m.el.currentTime=tg; }
+        else { m.el.pause(); if(Math.abs(m.el.currentTime-tg)>0.05) m.el.currentTime=tg; }
+      }
+    }
+  }
 }
 
 function renderFrame(){
-  const at=clipAtTime(state.time);
-  if(!at){ ctx.clearRect(0,0,stage.width,stage.height); ctx.fillStyle='#000'; ctx.fillRect(0,0,stage.width,stage.height); return; }
-  // video elemanını senkronla
-  syncVideoForClip(at.clip, at.local);
-  drawClip(at.clip, at.local);
-}
-
-function syncVideoForClip(c, local){
-  if(c.type!=='video'){ stopActiveVideo(); return; }
-  const m=state.media.find(x=>x.id===c.mediaId); if(!m?.el) return;
-  const target=c.trimStart+local;
-  if(state._activeVideoEl && state._activeVideoEl!==m.el) stopActiveVideo();
-  state._activeVideoEl=m.el;
-  if(state.playing){
-    if(m.el.paused) m.el.play().catch(()=>{});
-    if(Math.abs(m.el.currentTime-target)>0.35) m.el.currentTime=target;
-  } else {
-    m.el.pause(); m.el.currentTime=target;
+  if(!state.clips.length){
+    ctx.fillStyle='#15161f'; ctx.fillRect(0,0,stage.width,stage.height);
+    ctx.fillStyle='#666'; ctx.font='26px Inter,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(t('hintCanvas'), stage.width/2, stage.height/2);
+    return;
   }
+  manageVideos(state.time);
+  composeFrame(ctx,stage.width,stage.height,state.time);
 }
-function stopActiveVideo(){ if(state._activeVideoEl){ state._activeVideoEl.pause(); state._activeVideoEl=null; } }
 
 // ============================================================
-//  OYNATMA
+//  PLAYBACK
 // ============================================================
-$('#playBtn').onclick=()=> state.playing? pause():play();
-$('#toStartBtn').onclick=()=>{ seek(0); };
-
+$('#playBtn').onclick=()=> state.playing?pause():play();
+$('#toStartBtn').onclick=()=>seek(0);
 function play(){
   if(!state.clips.length) return;
   if(state.time>=totalDuration()-0.05) state.time=0;
-  state.playing=true;
-  $('#playBtn').innerHTML='<i class="fa-solid fa-pause"></i>';
+  state.playing=true; $('#playBtn').innerHTML='<i class="fa-solid fa-pause"></i>';
   state._startWall=performance.now(); state._startTime=state.time;
-  // arka plan müziği
-  if(state.audio?.el){ state.audio.el.muted=false; state.audio.el.currentTime=Math.min(state.time, state.audio.el.duration||state.time); state.audio.el.play().catch(()=>{}); }
+  if(state.audio?.el){ state.audio.el.muted=false; state.audio.el.currentTime=Math.min(state.time,state.audio.el.duration||state.time); state.audio.el.play().catch(()=>{}); }
   loop();
 }
 function pause(){
-  state.playing=false;
-  $('#playBtn').innerHTML='<i class="fa-solid fa-play"></i>';
+  state.playing=false; $('#playBtn').innerHTML='<i class="fa-solid fa-play"></i>';
   cancelAnimationFrame(state._raf);
-  stopActiveVideo();
+  state.media.forEach(m=>{ if(m.type==='video'&&m.el&&!m.el.paused) m.el.pause(); });
   if(state.audio?.el) state.audio.el.pause();
 }
 function loop(){
   if(!state.playing) return;
-  const elapsed=(performance.now()-state._startWall)/1000;
-  state.time=state._startTime+elapsed;
+  state.time=state._startTime+(performance.now()-state._startWall)/1000;
   const total=totalDuration();
   if(state.time>=total){ state.time=total; renderFrame(); updateTimeUI(); pause(); return; }
   renderFrame(); updateTimeUI();
   state._raf=requestAnimationFrame(loop);
 }
-function seek(t){
-  state.time=Math.max(0,Math.min(t, totalDuration()));
+function seek(time){
+  state.time=Math.max(0,Math.min(time,totalDuration()));
   if(state.playing){ state._startWall=performance.now(); state._startTime=state.time; }
   renderFrame(); updateTimeUI();
 }
 function updateTimeUI(){
   const total=totalDuration();
   $('#timeLabel').textContent=state.time.toFixed(1)+'s / '+total.toFixed(1)+'s';
-  $('#scrub').value = total? (state.time/total*1000) : 0;
+  $('#scrub').value= total? (state.time/total*1000):0;
 }
-$('#scrub').oninput=e=>{ const total=totalDuration(); seek(total*e.target.value/1000); };
+$('#scrub').oninput=e=>{ seek(totalDuration()*e.target.value/1000); };
 
 // ============================================================
-//  EN-BOY ORANI
+//  ASPECT RATIO
 // ============================================================
 $('#aspectBtn').onclick=()=>{
   const keys=Object.keys(ASPECTS);
-  const i=(keys.indexOf(state.aspect)+1)%keys.length;
-  state.aspect=keys[i];
+  state.aspect=keys[(keys.indexOf(state.aspect)+1)%keys.length];
   $('#aspectBtn').innerHTML='<i class="fa-solid fa-crop-simple"></i> '+state.aspect;
   applyAspect(); renderFrame();
 };
 function applyAspect(){
   const [w,h]=ASPECTS[state.aspect];
   stage.width=w; stage.height=h;
-  // CSS boyutu sığdır
+  $('#aspectBtn').innerHTML='<i class="fa-solid fa-crop-simple"></i> '+state.aspect;
   const wrap=$('.preview-wrap'); const maxW=wrap.clientWidth-28, maxH=wrap.clientHeight-28;
-  const sc=Math.min(maxW/w, maxH/h);
+  const sc=Math.min(maxW/w,maxH/h);
   stage.style.width=(w*sc)+'px'; stage.style.height=(h*sc)+'px';
 }
 window.addEventListener('resize',()=>{ applyAspect(); renderFrame(); });
 
 // ============================================================
-//  YENİ PROJE
+//  NEW PROJECT
 // ============================================================
 $('#newProjectBtn').onclick=()=>{
-  if(state.clips.length && !confirm('Yeni projeye başlansın mı? Mevcut çalışma silinecek.')) return;
+  if(state.clips.length && !confirm(t('confirmNew'))) return;
   pause();
   state.media=[]; state.clips=[]; state.audio=null; state.selectedClip=null; state.time=0;
+  mediaSeq=0; clipSeq=0;
   renderMedia(); renderTimeline(); renderInspector(); seek(0);
 };
 
 // ============================================================
-//  DIŞA AKTARMA (WebM / MP4)
+//  SAVE / LOAD PROJECT  (JSON)
+// ============================================================
+$('#saveProjectBtn').onclick=saveProject;
+function saveProject(){
+  const data={
+    app:'MovieMaker', version:2, savedAt:new Date().toISOString(),
+    lang:state.lang, aspect:state.aspect, mediaSeq, clipSeq,
+    media: state.media.map(m=>({
+      id:m.id, type:m.type, name:m.name, mime:m.mime||'', duration:m.duration||0, mediaDur:m.mediaDur||0,
+      base64: (m.type==='image'||m.type==='video') ? m.dataUrl : undefined,
+      audio:  (m.type==='audio') ? Array.from(m.bytes||[]) : undefined,
+    })),
+    clips: state.clips.map(c=>({
+      id:c.id, type:c.type, mediaId:c.mediaId, duration:c.duration, trimStart:c.trimStart,
+      text:c.text, textColor:c.textColor, textPos:c.textPos, fontSize:c.fontSize, bgColor:c.bgColor,
+      fit:c.fit, filter:c.filter, fadeIn:c.fadeIn, fadeOut:c.fadeOut, kenBurns:c.kenBurns,
+      transition:c.transition, transDur:c.transDur,
+    })),
+    audio: state.audio ? { mediaId:state.audio.mediaId, volume:state.audio.volume } : null,
+  };
+  const blob=new Blob([JSON.stringify(data)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`movie_project_${Date.now()}.json`; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  toast(t('saved'));
+}
+
+$('#loadProjectBtn').onclick=()=>$('#loadInput').click();
+$('#loadInput').onchange=async e=>{ const f=e.target.files[0]; if(f) await loadProject(f); e.target.value=''; };
+async function loadProject(file){
+  try{
+    const data=JSON.parse(await file.text());
+    if(!data || data.app!=='MovieMaker') throw new Error('format');
+    pause();
+    state.media=[]; state.clips=[]; state.audio=null; state.selectedClip=null; state.time=0;
+    state.lang=data.lang||state.lang; state.aspect=data.aspect||'16:9';
+    mediaSeq=data.mediaSeq||0; clipSeq=data.clipSeq||0;
+    for(const md of (data.media||[])){
+      const m={ id:md.id, type:md.type, name:md.name, mime:md.mime, duration:md.duration, mediaDur:md.mediaDur, el:null };
+      if(md.type==='image'||md.type==='video'){ m.dataUrl=md.base64; m.url=md.base64; buildMediaElement(m); }
+      else if(md.type==='audio'){
+        const bytes=new Uint8Array(md.audio||[]); m.bytes=bytes;
+        const blob=new Blob([bytes],{type:md.mime||'audio/mpeg'}); m.url=URL.createObjectURL(blob); buildMediaElement(m);
+      }
+      state.media.push(m);
+    }
+    state.clips=(data.clips||[]).map(c=>({ transition:'none', transDur:0.7, ...c }));
+    if(data.audio){ const am=mediaById(data.audio.mediaId); state.audio={ mediaId:data.audio.mediaId, volume:data.audio.volume??1, el:am?am.el:null }; }
+    localStorage.setItem('mm_lang',state.lang);
+    buildLangSelectValue();
+    applyAspect(); applyLang(); switchTab('images'); seek(0);
+    toast(t('loaded'));
+  }catch(err){ console.error(err); toast(t('loadErr')); }
+}
+
+// ============================================================
+//  EXPORT (WebM / MP4)
 // ============================================================
 const exportModal=$('#exportModal');
 let exportFmt='webm', recorder=null, recChunks=[], exportStopFlag=false;
+let expActx=null, expDest=null;
 
-$('#exportBtn').onclick=()=>{
-  if(!state.clips.length){ toast('Önce zaman çizelgesine sahne ekleyin'); return; }
-  showExportSetup(); exportModal.classList.add('show');
-};
-$('#exportCancel').onclick=()=> exportModal.classList.remove('show');
-$('#exportClose').onclick=()=> exportModal.classList.remove('show');
-
+$('#exportBtn').onclick=()=>{ if(!state.clips.length){ toast(t('addFirst')); return; } showExportSetup(); exportModal.classList.add('show'); };
+$('#exportCancel').onclick=()=>exportModal.classList.remove('show');
+$('#exportClose').onclick=()=>exportModal.classList.remove('show');
 $('#formatSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{
   $('#formatSeg').querySelectorAll('button').forEach(x=>x.classList.remove('on'));
   b.classList.add('on'); exportFmt=b.dataset.fmt; updateFmtNote();
 });
-
 function pickMime(fmt){
-  const cands = fmt==='mp4'
-    ? ['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4;codecs=avc1','video/mp4']
-    : ['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
+  const cands=fmt==='mp4'
+    ?['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4;codecs=avc1','video/mp4']
+    :['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
   for(const c of cands){ if(MediaRecorder.isTypeSupported(c)) return c; }
   return null;
 }
 function updateFmtNote(){
-  const note=$('#fmtNote');
-  if(exportFmt==='mp4'){
-    const mime=pickMime('mp4');
-    note.innerHTML = mime
-      ? '✅ Tarayıcınız MP4 kaydını destekliyor.'
-      : '⚠️ Tarayıcınız doğrudan MP4 kaydını desteklemiyor. WebM olarak kaydedilip <b>.mp4</b> uzantısıyla verilecek (çoğu oynatıcı açar). En iyi MP4 desteği için Chrome 130+ veya Safari kullanın.';
-  } else {
-    note.innerHTML='✅ WebM tüm modern tarayıcılarda desteklenir.';
-  }
+  const note=$('#fmtNote'); if(!note) return;
+  if(exportFmt==='mp4'){ note.innerHTML = pickMime('mp4')? t('noteMp4Ok') : t('noteMp4No'); }
+  else note.innerHTML=t('noteWebm');
 }
-
 function showExportSetup(){
   $('#exportSetup').style.display=''; $('#exportProgress').style.display='none'; $('#exportDone').style.display='none';
   updateFmtNote();
 }
-
 $('#exportStart').onclick=startExport;
 $('#exportStop').onclick=()=>{ exportStopFlag=true; };
+
+function exportAudioTracks(){
+  if(!expActx){ try{ expActx=new (window.AudioContext||window.webkitAudioContext)(); expDest=expActx.createMediaStreamDestination(); }catch(_){ return []; } }
+  let has=false;
+  const wire=el=>{ if(!el) return; if(el._wired){ has=true; el.muted=false; return; }
+    try{ const s=expActx.createMediaElementSource(el); s.connect(expDest); s.connect(expActx.destination); el._wired=true; el.muted=false; has=true; }catch(_){ } };
+  if(state.audio?.el) wire(state.audio.el);
+  state.clips.forEach(c=>{ if(c.type==='video'){ const m=mediaById(c.mediaId); if(m?.el) wire(m.el); } });
+  return has? expDest.stream.getAudioTracks():[];
+}
 
 async function startExport(){
   pause();
   const [rw,rh]=$('#resSelect').value.split('x').map(Number);
   const bitrate=+$('#qualitySelect').value;
-
-  // dışa aktarma için ayrı canvas (seçili çözünürlük)
   const canvas=document.createElement('canvas'); canvas.width=rw; canvas.height=rh;
   const ec=canvas.getContext('2d');
 
-  // ses grafiği
-  let audioStreamTracks=[];
-  let actx=null;
-  try{
-    actx=new (window.AudioContext||window.webkitAudioContext)();
-    const dest=actx.createMediaStreamDestination();
-    let hasAudio=false;
-    // arka plan müziği
-    if(state.audio?.el){
-      try{ const src=actx.createMediaElementSource(state.audio.el); src.connect(dest); hasAudio=true; }catch(_){}
-    }
-    // video kliplerinin sesi
-    for(const c of state.clips){
-      if(c.type==='video'){
-        const m=state.media.find(x=>x.id===c.mediaId);
-        if(m?.el && !m._audioWired){
-          try{ const src=actx.createMediaElementSource(m.el); src.connect(dest); m._audioWired=true; hasAudio=true; m.el.muted=false; }catch(_){}
-        } else if(m?._audioWired){ hasAudio=true; m.el.muted=false; }
-      }
-    }
-    if(hasAudio) audioStreamTracks=dest.stream.getAudioTracks();
-  }catch(e){ console.warn('Ses grafiği kurulamadı',e); }
+  const audioTracks=exportAudioTracks();
+  if(expActx && expActx.state==='suspended'){ try{ await expActx.resume(); }catch(_){} }
 
   const vstream=canvas.captureStream(30);
-  const tracks=[...vstream.getVideoTracks(), ...audioStreamTracks];
-  const stream=new MediaStream(tracks);
+  const stream=new MediaStream([...vstream.getVideoTracks(),...audioTracks]);
+  const mime=pickMime(exportFmt)||pickMime('webm')||'video/webm';
+  const actualIsMp4=mime.startsWith('video/mp4');
+  try{ recorder=new MediaRecorder(stream,{ mimeType:mime, videoBitsPerSecond:bitrate }); }
+  catch(_){ recorder=new MediaRecorder(stream); }
+  recChunks=[]; recorder.ondataavailable=e=>{ if(e.data.size) recChunks.push(e.data); };
 
-  const mime=pickMime(exportFmt) || pickMime('webm') || 'video/webm';
-  const actualIsMp4 = mime.startsWith('video/mp4');
-  try{
-    recorder=new MediaRecorder(stream,{ mimeType:mime, videoBitsPerSecond:bitrate });
-  }catch(e){ recorder=new MediaRecorder(stream); }
-
-  recChunks=[];
-  recorder.ondataavailable=e=>{ if(e.data.size) recChunks.push(e.data); };
-
-  // UI -> ilerleme
   $('#exportSetup').style.display='none'; $('#exportProgress').style.display='';
-  exportStopFlag=false;
+  $('#progText').textContent=t('preparing');
+  exportStopFlag=false; state.exporting=true;
 
   const total=totalDuration();
   recorder.start(100);
-  if(actx && actx.state==='suspended') await actx.resume();
-
-  // gerçek zamanlı render döngüsü
-  const startWall=performance.now();
-  // arka plan müziği başlat
   if(state.audio?.el){ try{ state.audio.el.currentTime=0; state.audio.el.muted=false; await state.audio.el.play(); }catch(_){} }
 
+  const startWall=performance.now();
   await new Promise(resolve=>{
     function step(){
-      const t=(performance.now()-startWall)/1000;
-      if(t>=total || exportStopFlag){ resolve(); return; }
-      renderExportFrame(ec, canvas, t);
-      $('#progFill').style.width=Math.min(100,t/total*100)+'%';
-      $('#progText').textContent=`İşleniyor: ${t.toFixed(1)}s / ${total.toFixed(1)}s`;
+      const tt=(performance.now()-startWall)/1000;
+      if(tt>=total||exportStopFlag){ resolve(); return; }
+      state.time=tt; manageVideos(tt); composeFrame(ec,canvas.width,canvas.height,tt);
+      $('#progFill').style.width=Math.min(100,tt/total*100)+'%';
+      $('#progText').textContent=`${t('processing')}: ${tt.toFixed(1)}s / ${total.toFixed(1)}s`;
       requestAnimationFrame(step);
     }
     step();
   });
 
   recorder.stop();
-  // müzik/video durdur
+  state.exporting=false;
+  state.media.forEach(m=>{ if(m.el&&m.el.pause) m.el.pause(); });
   if(state.audio?.el) state.audio.el.pause();
-  state.clips.forEach(c=>{ const m=state.media.find(x=>x.id===c.mediaId); if(m?.el?.pause) m.el.pause(); });
+  await new Promise(res=>recorder.onstop=res);
 
-  await new Promise(res=> recorder.onstop=res);
-  if(actx) actx.close().catch(()=>{});
-
-  const blob=new Blob(recChunks,{ type:mime });
+  const blob=new Blob(recChunks,{type:mime});
   const url=URL.createObjectURL(blob);
-  const ext = (actualIsMp4 || exportFmt==='mp4') ? 'mp4' : 'webm';
-  // Kullanıcı mp4 istedi ama tarayıcı webm üretti -> uzantı mp4, içerik webm
   const link=$('#downloadLink');
-  link.href=url; link.download=`film_${Date.now()}.${exportFmt==='mp4'?'mp4':'webm'}`;
+  link.href=url; link.download=`movie_${Date.now()}.${exportFmt==='mp4'?'mp4':'webm'}`;
   $('#exportProgress').style.display='none'; $('#exportDone').style.display='';
   const sizeMB=(blob.size/1048576).toFixed(1);
-  let info=`Süre: ${total.toFixed(1)}s • Boyut: ${sizeMB} MB • ${$('#resSelect').value}`;
-  if(exportFmt==='mp4' && !actualIsMp4) info+='<br><span style="color:var(--warn)">Not: Tarayıcı gerçek MP4 üretemediği için içerik WebM olarak kodlandı (.mp4 uzantısıyla).</span>';
+  let info=`${t('infoDur')}: ${total.toFixed(1)}s • ${t('infoSize')}: ${sizeMB} MB • ${$('#resSelect').value}`;
+  if(exportFmt==='mp4' && !actualIsMp4) info+=`<br><span style="color:var(--warn)">${t('mp4Fallback')}</span>`;
   $('#doneInfo').innerHTML=info;
-  toast('Video hazır!');
-}
-
-// Dışa aktarma karesini hedef canvas'a çiz (ana stage'den bağımsız ölçek)
-function renderExportFrame(ec, canvas, t){
-  const W=canvas.width,H=canvas.height;
-  const at=clipAtTime(t);
-  ec.clearRect(0,0,W,H); ec.fillStyle='#000'; ec.fillRect(0,0,W,H);
-  if(!at) return;
-  const c=at.clip, local=at.local;
-  ec.fillStyle=c.bgColor||'#000'; ec.fillRect(0,0,W,H);
-  const m=state.media.find(x=>x.id===c.mediaId);
-  ec.filter=FILTERS[c.filter]||'none';
-  // video senkron
-  if(c.type==='video' && m?.el){
-    const target=c.trimStart+local;
-    if(m.el.paused) m.el.play().catch(()=>{});
-    if(Math.abs(m.el.currentTime-target)>0.4) m.el.currentTime=target;
-    if(m.el.readyState>=2) drawFitOn(ec,W,H,m.el,c,local);
-  } else if(c.type==='image' && m?.el?.complete){
-    drawFitOn(ec,W,H,m.el,c,local);
-  } else {
-    // diğer videoları durdur
-  }
-  ec.filter='none';
-  if(c.text) drawTextOn(ec,W,H,c);
-  // fade
-  const fd=Math.min(0.6,c.duration/2); let a=1;
-  if(c.fadeIn && local<fd) a=local/fd;
-  if(c.fadeOut && local>c.duration-fd) a=Math.min(a,(c.duration-local)/fd);
-  if(a<1){ ec.fillStyle='rgba(0,0,0,'+(1-a)+')'; ec.fillRect(0,0,W,H); }
-}
-function drawFitOn(ec,W,H,el,c,local){
-  const mw=el.videoWidth||el.naturalWidth, mh=el.videoHeight||el.naturalHeight;
-  if(!mw||!mh) return;
-  let scale=c.fit==='cover'?Math.max(W/mw,H/mh):Math.min(W/mw,H/mh);
-  if(c.kenBurns&&c.type==='image'){ const p=c.duration?local/c.duration:0; scale*=(1+0.08*p); }
-  const dw=mw*scale,dh=mh*scale;
-  ec.drawImage(el,(W-dw)/2,(H-dh)/2,dw,dh);
-}
-function drawTextOn(ec,W,H,c){
-  const fs=c.fontSize*(W/1280);
-  ec.font=`700 ${fs}px Inter, Segoe UI, sans-serif`;
-  ec.textAlign='center'; ec.textBaseline='middle';
-  const lines=(c.text||'').split('\n'); const lh=fs*1.2;
-  let y=c.textPos==='top'?H*0.16:c.textPos==='bottom'?H*0.84-(lines.length-1)*lh:H/2;
-  lines.forEach((ln,i)=>{ const yy=y+i*lh;
-    ec.lineWidth=fs*0.12; ec.strokeStyle='rgba(0,0,0,.55)'; ec.lineJoin='round'; ec.strokeText(ln,W/2,yy);
-    ec.fillStyle=c.textColor||'#fff'; ec.fillText(ln,W/2,yy);
-  });
+  seek(0); toast(t('videoReady'));
 }
 
 // ============================================================
-//  YARDIMCI
+//  HELPERS / INIT
 // ============================================================
 let toastT=null;
-function toast(msg){
-  const el=$('#toast'); el.textContent=msg; el.classList.add('show');
-  clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('show'),2200);
-}
+function toast(msg){ const el=$('#toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('show'),2200); }
 
-// Klavye kısayolları
 window.addEventListener('keydown',e=>{
   if(e.target.matches('input,textarea,select')) return;
   if(e.code==='Space'){ e.preventDefault(); state.playing?pause():play(); }
   if(e.code==='Delete'&&state.selectedClip) deleteClip(state.selectedClip);
 });
 
-// Başlat
+buildLangSelect();
 applyAspect();
-renderFrame();
-ctx.fillStyle='#666'; ctx.font='28px Inter,sans-serif'; ctx.textAlign='center';
-ctx.fillText('🎬 Medya ekleyip sahneleri zaman çizelgesine dizin', stage.width/2, stage.height/2);
+applyLang();
 </script>
 </body>
 </html>
