@@ -153,9 +153,8 @@ const $ = s => document.querySelector(s);
 const KEY = "onlinellm.v1";
 
 /* Puter listesi çekilemezse kullanılacak yedek (açık kaynak ağırlıklı) */
-const FALLBACK = ["gpt-5-nano","claude-sonnet-4-5","google/gemini-2.5-flash",
-  "deepseek-chat","deepseek-reasoner","openrouter:qwen/qwen-2.5-coder-32b-instruct",
-  "openrouter:meta-llama/llama-3.3-70b-instruct","openrouter:mistralai/mistral-small-latest"];
+const FALLBACK = ["gpt-5.4-nano","gpt-5.4-mini","claude-sonnet-5","gemini-3.5-flash-lite",
+  "grok-4-1-fast","deepseek-chat","deepseek-reasoner","mistral-large-latest","codestral-latest"];
 
 let S = {chats:[], cur:null, prov:"puter", model:"", sys:"", temp:0.7, ctx:true, light:false,
          url:"https://api.openai.com/v1", key:""};
@@ -268,21 +267,35 @@ function fillModels(){
   }
   if(list.includes(S.model)) sel.value = S.model; else { S.model = list[0]; save(); }
 }
+/* dizi, {chat:{openai:[...]}} ya da {models:[{id}]} — hepsinden id topla */
+function harvest(x, out){
+  out = out || [];
+  if(!x) return out;
+  if(typeof x === "string"){ out.push(x); return out; }
+  if(Array.isArray(x)){ for(const i of x) harvest(i, out); return out; }
+  if(typeof x === "object"){
+    if(typeof x.id === "string"){ out.push(x.id); return out; }
+    if(typeof x.name === "string" && !x.models){ out.push(x.name); return out; }
+    for(const k of Object.keys(x)) harvest(x[k], out);
+  }
+  return out;
+}
 async function loadModels(){
   setStat("modeller alınıyor…","");
   models = [];
   try{
     if(S.prov === "puter"){
       if(typeof puter === "undefined") throw new Error("puter.js yüklenemedi (internet/engelleyici?)");
-      const r = await puter.ai.listModels();
-      if(Array.isArray(r)) models = r.map(m => typeof m === "string" ? m : (m.id || m.name)).filter(Boolean);
-      else if(r && typeof r === "object"){
-        for(const k of Object.keys(r)){
-          const v = r[k];
-          if(Array.isArray(v)) for(const m of v) models.push(typeof m === "string" ? m : (m.id || m.name));
-        }
-        models = models.filter(Boolean);
+      let r = null;
+      try{
+        if(puter.ai && typeof puter.ai.listModels === "function") r = await puter.ai.listModels();
+      }catch(e){ console.warn("listModels:", e); }
+      if(!r){
+        const res = await fetch("https://api.puter.com/puterai/chat/models/details");
+        if(!res.ok) throw new Error("model listesi HTTP " + res.status);
+        r = await res.json();
       }
+      models = harvest(r);
     }else{
       const u = S.url.replace(/\/+$/,"") + "/models";
       const h = {}; if(S.key) h.Authorization = "Bearer " + S.key;
@@ -335,6 +348,22 @@ async function send(){
   if(!txt) return;
   const model = $("#model").value;
   if(!model || model === "eşleşme yok" || model === "yükleniyor…"){ showErr("<b>Model seçili değil.</b>"); return; }
+
+  /* giriş penceresi ancak tıklama anında açılabilir: ilk await'ten önce hallet */
+  if(S.prov === "puter"){
+    try{
+      if(typeof puter === "undefined") throw new Error("puter.js yüklenmedi");
+      if(puter.auth && puter.auth.isSignedIn && !puter.auth.isSignedIn()){
+        await puter.auth.signIn();
+        refreshWho();
+      }
+    }catch(e){
+      showErr("<b>Puter girişi yapılamadı.</b> " + esc(String(e && e.message || e)) +
+        "<br>· Tarayıcı açılır pencereyi engellemiş olabilir; adres çubuğundaki engel simgesinden izin ver." +
+        "<br>· Reklam/izleyici engelleyici <code class='inl'>js.puter.com</code> ve <code class='inl'>api.puter.com</code> adreslerini kesiyor olabilir.");
+      return;
+    }
+  }
 
   const c = chat();
   c.msgs.push({role:"user", content:txt});
@@ -397,7 +426,10 @@ async function send(){
       else holder.remove();
     }else{
       holder.remove();
-      const m = esc((e && (e.message || e.error && e.error.message)) || String(e));
+      let raw = "";
+      try{ raw = JSON.stringify(e && (e.error || e), Object.getOwnPropertyNames(e || {})).slice(0,400); }catch(x){}
+      const m = esc((e && (e.message || e.error && e.error.message)) || String(e)) +
+        (raw ? '<br><code class="inl">' + esc(raw) + "</code>" : "");
       showErr("<b>İstek başarısız.</b> " + m +
         "<br>· Model adı bu sağlayıcıda geçerli mi? Listeyi ⟳ ile yenile." +
         (S.prov === "puter"
