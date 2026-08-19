@@ -4,7 +4,26 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Online LLM Paneli</title>
-<script src="https://js.puter.com/v2/"></script>
+<script>
+/* puter.js tek kaynağa bağlı kalmasın: sırayla dene */
+window.PUTER_SRCS = [
+  "https://js.puter.com/v2/",
+  "https://cdn.jsdelivr.net/npm/@heyputer/puter.js/dist/puter.js",
+  "https://unpkg.com/@heyputer/puter.js/dist/puter.js"
+];
+window.puterLoad = function(i){
+  i = i || 0;
+  return new Promise(function(res){
+    if(typeof window.puter !== "undefined") return res(true);
+    if(i >= window.PUTER_SRCS.length) return res(false);
+    var s = document.createElement("script");
+    s.src = window.PUTER_SRCS[i];
+    s.onload  = function(){ res(typeof window.puter !== "undefined" ? true : window.puterLoad(i+1)); };
+    s.onerror = function(){ console.warn("puter.js yüklenemedi:", s.src); res(window.puterLoad(i+1)); };
+    document.head.appendChild(s);
+  });
+};
+</script>
 <style>
 :root{
   --bg:#0e1116; --bg2:#141922; --bg3:#1b2230; --line:#26303f;
@@ -352,7 +371,8 @@ async function send(){
   /* giriş penceresi ancak tıklama anında açılabilir: ilk await'ten önce hallet */
   if(S.prov === "puter"){
     try{
-      if(typeof puter === "undefined") throw new Error("puter.js yüklenmedi");
+      if(typeof puter === "undefined") await window.puterLoad();
+      if(typeof puter === "undefined") throw new Error("puter.js yüklenemedi (engelleyici veya ağ)");
       if(puter.auth && puter.auth.isSignedIn && !puter.auth.isSignedIn()){
         await puter.auth.signIn();
         refreshWho();
@@ -519,7 +539,24 @@ $("#temp").value = S.temp; $("#tempV").textContent = Number(S.temp).toFixed(2);
 $("#url").value = S.url; $("#key").value = S.key;
 document.body.classList.toggle("light", !!S.light);
 if(!S.chats.length) newChat(); else { if(!chat()) S.cur = S.chats[0].id; drawList(); drawLog(); }
-loadModels(); refreshWho();
+
+(async function(){
+  if(S.prov === "puter"){
+    setStat("puter.js yükleniyor…","");
+    const ok = await window.puterLoad();
+    if(!ok){
+      setStat("puter.js yüklenemedi","off");
+      showErr("<b>puter.js yüklenemedi.</b> Denenen üç kaynağın hiçbiri yanıt vermedi, bu yüzden hiçbir model çalışmaz." +
+        "<br>· Reklam/izleyici engelleyicini (uBlock, AdGuard, Brave Shields) bu site için kapat." +
+        "<br>· Tarayıcıda <code class='inl'>https://js.puter.com/v2/</code> adresini aç: kod metni gelmiyorsa ağ ya da DNS kesiyor demektir." +
+        "<br>· Kurumsal ağ / VPN / filtreli DNS varsa başka bir bağlantıda dene." +
+        "<br>· Alternatif: üstteki listeden <b>Özel / OpenAI uyumlu</b> seçip kendi sunucunu ya da anahtarlı bir servisi gir.");
+      models = FALLBACK.slice(); fillModels();
+      return;
+    }
+  }
+  loadModels(); refreshWho();
+})();
 </script>
 </body>
 </html>
