@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Online LLM Paneli</title>
+<script src="https://js.puter.com/v2/"></script>
+<style>
+:root{
+  --bg:#0e1116; --bg2:#141922; --bg3:#1b2230; --line:#26303f;
+  --fg:#dfe6f0; --fg2:#8b97a8; --acc:#7c6cf5; --acc2:#2dd4bf;
+  --err:#ef5f5f; --ok:#3ec98a;
+  --mono:ui-monospace,"Cascadia Mono","JetBrains Mono","Consolas","DejaVu Sans Mono",monospace;
+  --ui:system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --r:8px;
+}
+body.light{--bg:#f4f6f9;--bg2:#fff;--bg3:#e9edf3;--line:#d3dae4;--fg:#18202b;--fg2:#5d6a7c;--acc:#5b4bd6;--acc2:#0d9488}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--ui);font-size:14px;display:flex;overflow:hidden}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+
+#side{width:250px;flex:0 0 250px;background:var(--bg2);border-right:1px solid var(--line);display:flex;flex-direction:column}
+#side header{padding:14px 14px 10px;border-bottom:1px solid var(--line)}
+#side header h1{margin:0;font-family:var(--mono);font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg2);font-weight:600}
+#side header h1 b{color:var(--acc)}
+#newBtn{margin:10px 14px;padding:9px;background:var(--acc);color:#fff;border:0;border-radius:var(--r);font-weight:600}
+#newBtn:hover{filter:brightness(1.1)}
+#chats{flex:1;overflow-y:auto;padding:0 8px 8px}
+.ci{display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:var(--r);color:var(--fg2);margin-bottom:2px}
+.ci:hover{background:var(--bg3);color:var(--fg)}
+.ci.sel{background:var(--bg3);color:var(--fg);box-shadow:inset 2px 0 0 var(--acc)}
+.ci span{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.ci button{background:none;border:0;color:var(--fg2);padding:2px 4px;border-radius:4px;opacity:0;font-size:15px;line-height:1}
+.ci:hover button{opacity:1}
+.ci button:hover{color:var(--err);background:var(--bg)}
+#side footer{padding:10px 14px;border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap}
+#side footer button{flex:1;background:var(--bg3);border:1px solid var(--line);border-radius:var(--r);padding:7px;color:var(--fg2);font-size:12px}
+#side footer button:hover{color:var(--fg)}
+#who{width:100%;font-family:var(--mono);font-size:11px;color:var(--fg2);padding-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+#main{flex:1;display:flex;flex-direction:column;min-width:0}
+#bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 16px;background:var(--bg2);border-bottom:1px solid var(--line)}
+#bar select,#bar input{background:var(--bg3);border:1px solid var(--line);border-radius:var(--r);padding:7px 9px}
+#model{max-width:300px;flex:1;min-width:150px;font-family:var(--mono);font-size:12px}
+#filter{width:130px;font-size:12px}
+#refresh,#gear{background:var(--bg3);border:1px solid var(--line);border-radius:var(--r);padding:7px 10px}
+#dot{width:9px;height:9px;border-radius:50%;background:var(--fg2);flex:0 0 auto}
+#dot.on{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+#dot.off{background:var(--err)}
+#stat{color:var(--fg2);font-size:12px;font-family:var(--mono)}
+
+#opts{display:none;gap:14px;padding:10px 16px;background:var(--bg2);border-bottom:1px solid var(--line);flex-wrap:wrap;align-items:center}
+#opts.show{display:flex}
+#opts label{color:var(--fg2);font-size:12px;display:flex;align-items:center;gap:6px}
+#opts input[type=text]{background:var(--bg3);border:1px solid var(--line);border-radius:var(--r);padding:7px 9px;font-size:12px}
+#sys{flex:1;min-width:220px}
+#url{width:230px;font-family:var(--mono)}
+#key{width:170px;font-family:var(--mono)}
+.only-custom{display:none}
+body.custom .only-custom{display:flex}
+
+#log{flex:1;overflow-y:auto;padding:22px 16px 8px}
+.wrap{max-width:800px;margin:0 auto}
+.msg{display:flex;gap:12px;margin-bottom:22px}
+.av{flex:0 0 28px;height:28px;border-radius:6px;display:grid;place-items:center;font-family:var(--mono);font-size:11px;font-weight:700;color:#fff}
+.user .av{background:var(--fg2)}
+.bot .av{background:linear-gradient(135deg,var(--acc),var(--acc2))}
+.body{flex:1;min-width:0;line-height:1.65;overflow-wrap:break-word}
+.body p{margin:0 0 10px}
+.body h3{margin:14px 0 6px;font-size:15px}
+.body ul{margin:0 0 10px;padding-left:20px}
+.body code.inl{background:var(--bg3);border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-family:var(--mono);font-size:12.5px;color:var(--acc2)}
+.cb{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin:0 0 12px;background:var(--bg2)}
+.cbh{display:flex;justify-content:space-between;align-items:center;padding:5px 10px;background:var(--bg3);border-bottom:1px solid var(--line)}
+.cbh em{font-style:normal;font-family:var(--mono);font-size:11px;color:var(--fg2);letter-spacing:.08em;text-transform:uppercase}
+.cbh button{background:none;border:1px solid var(--line);border-radius:5px;color:var(--fg2);font-size:11px;padding:3px 8px}
+.cbh button:hover{color:var(--fg);border-color:var(--acc)}
+.cb pre{margin:0;padding:12px;overflow-x:auto}
+.cb code{font-family:var(--mono);font-size:12.5px;line-height:1.55;white-space:pre}
+.err{border-left:3px solid var(--err);background:var(--bg2);padding:10px 12px;border-radius:0 var(--r) var(--r) 0;color:var(--fg2);font-size:13px}
+.err b{color:var(--err)}
+.cursor{display:inline-block;width:7px;height:15px;background:var(--acc2);vertical-align:-2px;animation:bl .9s steps(1) infinite}
+@keyframes bl{50%{opacity:0}}
+#empty{text-align:center;color:var(--fg2);padding:60px 20px}
+#empty h2{font-family:var(--mono);font-weight:600;letter-spacing:.1em;color:var(--fg);font-size:16px}
+#empty kbd{font-family:var(--mono);background:var(--bg3);border:1px solid var(--line);border-radius:4px;padding:2px 6px;font-size:12px}
+
+#dock{padding:10px 16px 16px}
+#box{max-width:800px;margin:0 auto;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:8px;display:flex;gap:8px;align-items:flex-end}
+#box:focus-within{border-color:var(--acc)}
+#in{flex:1;background:none;border:0;resize:none;padding:8px;max-height:200px;line-height:1.5}
+#in:focus{outline:none}
+#send{background:var(--acc);border:0;color:#fff;border-radius:8px;padding:9px 16px;font-weight:600}
+#send.stop{background:var(--err)}
+#hint{max-width:800px;margin:6px auto 0;color:var(--fg2);font-size:11px;font-family:var(--mono)}
+#menu{display:none;background:var(--bg3);border:1px solid var(--line);border-radius:var(--r);padding:7px 10px}
+@media(max-width:720px){#side{position:fixed;left:-250px;top:0;bottom:0;z-index:9;transition:left .2s}#side.open{left:0}#menu{display:block}}
+</style>
+</head>
+<body>
+
+<aside id="side">
+  <header><h1>ONLINE <b>LLM</b> PANELİ</h1></header>
+  <button id="newBtn">+ Yeni sohbet</button>
+  <div id="chats"></div>
+  <footer>
+    <button id="theme">Tema</button>
+    <button id="exp">Dışa aktar</button>
+    <button id="auth">Giriş</button>
+    <div id="who"></div>
+  </footer>
+</aside>
+
+<div id="main">
+  <div id="bar">
+    <button id="menu">☰</button>
+    <select id="prov">
+      <option value="puter">Puter (anahtarsız)</option>
+      <option value="custom">Özel / OpenAI uyumlu</option>
+    </select>
+    <input id="filter" placeholder="model ara…" spellcheck="false">
+    <select id="model"><option>yükleniyor…</option></select>
+    <button id="refresh" title="Model listesini yenile">⟳</button>
+    <button id="gear" title="Ayarlar">⚙</button>
+    <div id="dot"></div><div id="stat">hazırlanıyor</div>
+  </div>
+
+  <div id="opts">
+    <input id="sys" type="text" placeholder="Sistem promptu (isteğe bağlı)">
+    <label>Sıcaklık <input id="temp" type="range" min="0" max="1.5" step="0.05" value="0.7"> <b id="tempV">0.70</b></label>
+    <label><input id="ctx" type="checkbox" checked> Geçmişi gönder</label>
+    <label class="only-custom">Adres <input id="url" type="text" spellcheck="false" placeholder="https://.../v1"></label>
+    <label class="only-custom">Anahtar <input id="key" type="password" placeholder="varsa"></label>
+  </div>
+
+  <div id="log"><div class="wrap" id="wrap"></div></div>
+
+  <div id="dock">
+    <div id="box">
+      <textarea id="in" rows="1" placeholder="Bir şey sor ya da kod yazdır…"></textarea>
+      <button id="send">Gönder</button>
+    </div>
+    <div id="hint">Enter: gönder · Shift+Enter: satır · sohbetler bu tarayıcıda saklanır</div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const KEY = "onlinellm.v1";
+
+/* Puter listesi çekilemezse kullanılacak yedek (açık kaynak ağırlıklı) */
+const FALLBACK = ["gpt-5-nano","claude-sonnet-4-5","google/gemini-2.5-flash",
+  "deepseek-chat","deepseek-reasoner","openrouter:qwen/qwen-2.5-coder-32b-instruct",
+  "openrouter:meta-llama/llama-3.3-70b-instruct","openrouter:mistralai/mistral-small-latest"];
+
+let S = {chats:[], cur:null, prov:"puter", model:"", sys:"", temp:0.7, ctx:true, light:false,
+         url:"https://api.openai.com/v1", key:""};
+let models = [], busy = false, stopped = false, abort = null;
+
+/* ---------- kayıt ---------- */
+function load(){
+  try{ const r = localStorage.getItem(KEY); if(r) S = Object.assign(S, JSON.parse(r)); }
+  catch(e){ console.warn(e); }
+  if(!Array.isArray(S.chats)) S.chats = [];
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){ console.warn(e); } }
+
+/* ---------- markdown ---------- */
+function esc(s){
+  return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function md(src){
+  const cbs = [];
+  let t = String(src);
+  t = t.replace(/```([a-zA-Z0-9_+-]*)\r?\n?([\s\S]*?)```/g, (m,l,c) => { cbs.push([l,c.replace(/\n$/,"")]); return "\u0000C"+(cbs.length-1)+"\u0000"; });
+  t = t.replace(/```([a-zA-Z0-9_+-]*)\r?\n?([\s\S]*)$/, (m,l,c) => { cbs.push([l,c]); return "\u0000C"+(cbs.length-1)+"\u0000"; });
+  t = esc(t);
+  t = t.replace(/`([^`\n]+)`/g, (m,c) => '<code class="inl">'+c+"</code>");
+  t = t.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
+  const out = []; let li = false, par = [];
+  const flush = () => { if(par.length){ out.push("<p>"+par.join("<br>")+"</p>"); par = []; } };
+  const endLi = () => { if(li){ out.push("</ul>"); li = false; } };
+  for(const line of t.split("\n")){
+    const cb = line.match(/^\u0000C(\d+)\u0000$/);
+    if(cb){
+      flush(); endLi();
+      const [lang, code] = cbs[+cb[1]];
+      out.push('<div class="cb"><div class="cbh"><em>'+esc(lang||"kod")+
+        '</em><button class="cpy" type="button">Kopyala</button></div><pre><code>'+esc(code)+"</code></pre></div>");
+      continue;
+    }
+    if(/^\s*$/.test(line)){ flush(); endLi(); continue; }
+    const h = line.match(/^#{1,4}\s+(.*)$/);
+    if(h){ flush(); endLi(); out.push("<h3>"+h[1]+"</h3>"); continue; }
+    const it = line.match(/^\s*(?:[-*]|\d+\.)\s+(.*)$/);
+    if(it){ flush(); if(!li){ out.push("<ul>"); li = true; } out.push("<li>"+it[1]+"</li>"); continue; }
+    endLi(); par.push(line);
+  }
+  flush(); endLi();
+  return out.join("");
+}
+
+/* ---------- sohbetler ---------- */
+const chat = () => S.chats.find(c => c.id === S.cur);
+function newChat(){
+  S.chats.unshift({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6), title:"Yeni sohbet", msgs:[]});
+  S.cur = S.chats[0].id; save(); drawList(); drawLog(); $("#in").focus();
+}
+function drawList(){
+  const box = $("#chats"); box.innerHTML = "";
+  for(const c of S.chats){
+    const d = document.createElement("div");
+    d.className = "ci" + (c.id === S.cur ? " sel" : "");
+    const s = document.createElement("span");
+    s.textContent = c.title; s.title = c.title;
+    s.onclick = () => { S.cur = c.id; save(); drawList(); drawLog(); };
+    const b = document.createElement("button");
+    b.type = "button"; b.textContent = "×"; b.title = "Sil";
+    b.onclick = () => {
+      S.chats = S.chats.filter(x => x.id !== c.id);
+      if(S.cur === c.id) S.cur = S.chats[0] ? S.chats[0].id : null;
+      if(!S.chats.length) newChat(); else { save(); drawList(); drawLog(); }
+    };
+    d.append(s,b); box.append(d);
+  }
+}
+function drawLog(){
+  const w = $("#wrap"); w.innerHTML = "";
+  const c = chat();
+  if(!c || !c.msgs.length){
+    w.innerHTML = '<div id="empty"><h2>Sohbete başla</h2><p>Üstten model seç, alta yaz.<br>' +
+      'İlk istekte tarayıcı <kbd>Puter</kbd> girişi isteyebilir — ücretsiz.</p></div>';
+    return;
+  }
+  for(const m of c.msgs) w.append(bubble(m.role, m.content));
+  $("#log").scrollTop = $("#log").scrollHeight;
+}
+function bubble(role, content){
+  const d = document.createElement("div");
+  d.className = "msg " + (role === "user" ? "user" : "bot");
+  const a = document.createElement("div");
+  a.className = "av"; a.textContent = role === "user" ? "SEN" : "AI";
+  const b = document.createElement("div");
+  b.className = "body";
+  b.innerHTML = role === "user" ? "<p>"+esc(content).replace(/\n/g,"<br>")+"</p>" : md(content);
+  d.append(a,b); return d;
+}
+function showErr(html){
+  const d = document.createElement("div");
+  d.className = "msg bot";
+  d.innerHTML = '<div class="av">!</div><div class="body"><div class="err">'+html+"</div></div>";
+  $("#wrap").append(d); $("#log").scrollTop = $("#log").scrollHeight;
+}
+function setStat(t, s){ $("#stat").textContent = t; $("#dot").className = s || ""; }
+
+/* ---------- modeller ---------- */
+function fillModels(){
+  const q = $("#filter").value.trim().toLowerCase();
+  const list = q ? models.filter(m => m.toLowerCase().includes(q)) : models;
+  const sel = $("#model"); sel.innerHTML = "";
+  if(!list.length){ sel.innerHTML = "<option>eşleşme yok</option>"; return; }
+  for(const m of list.slice(0,400)){
+    const o = document.createElement("option"); o.value = o.textContent = m; sel.append(o);
+  }
+  if(list.includes(S.model)) sel.value = S.model; else { S.model = list[0]; save(); }
+}
+async function loadModels(){
+  setStat("modeller alınıyor…","");
+  models = [];
+  try{
+    if(S.prov === "puter"){
+      if(typeof puter === "undefined") throw new Error("puter.js yüklenemedi (internet/engelleyici?)");
+      const r = await puter.ai.listModels();
+      if(Array.isArray(r)) models = r.map(m => typeof m === "string" ? m : (m.id || m.name)).filter(Boolean);
+      else if(r && typeof r === "object"){
+        for(const k of Object.keys(r)){
+          const v = r[k];
+          if(Array.isArray(v)) for(const m of v) models.push(typeof m === "string" ? m : (m.id || m.name));
+        }
+        models = models.filter(Boolean);
+      }
+    }else{
+      const u = S.url.replace(/\/+$/,"") + "/models";
+      const h = {}; if(S.key) h.Authorization = "Bearer " + S.key;
+      const res = await fetch(u, {headers:h});
+      if(!res.ok) throw new Error("HTTP " + res.status);
+      const j = await res.json();
+      models = (j.data || j.models || []).map(m => m.id || m.name).filter(Boolean);
+    }
+    if(!models.length) throw new Error("liste boş");
+    models = [...new Set(models)].sort();
+    setStat(models.length + " model", "on");
+  }catch(e){
+    models = FALLBACK.slice();
+    setStat("liste alınamadı, yedek liste", "off");
+    console.warn(e);
+  }
+  fillModels();
+}
+
+/* ---------- OpenAI uyumlu akış ---------- */
+async function* lines(res){
+  const rd = res.body.getReader(), dec = new TextDecoder();
+  let buf = "";
+  while(true){
+    const {value, done} = await rd.read();
+    if(done) break;
+    buf += dec.decode(value, {stream:true});
+    let i;
+    while((i = buf.indexOf("\n")) >= 0){
+      const l = buf.slice(0,i).replace(/\r$/,""); buf = buf.slice(i+1);
+      if(l.trim()) yield l;
+    }
+  }
+  if(buf.trim()) yield buf.trim();
+}
+function chunkOf(line){
+  if(!line.startsWith("data:")) return null;
+  const p = line.slice(5).trim();
+  if(p === "[DONE]") return false;
+  let j; try{ j = JSON.parse(p); }catch(e){ return null; }
+  if(j.error) throw new Error(j.error.message || JSON.stringify(j.error));
+  const d = j.choices && j.choices[0] && (j.choices[0].delta || j.choices[0].message);
+  return (d && d.content) || null;
+}
+
+/* ---------- gönderim ---------- */
+async function send(){
+  if(busy){ stopped = true; if(abort) abort.abort(); return; }
+  const txt = $("#in").value.trim();
+  if(!txt) return;
+  const model = $("#model").value;
+  if(!model || model === "eşleşme yok" || model === "yükleniyor…"){ showErr("<b>Model seçili değil.</b>"); return; }
+
+  const c = chat();
+  c.msgs.push({role:"user", content:txt});
+  if(c.title === "Yeni sohbet") c.title = txt.slice(0,42);
+  $("#in").value = ""; $("#in").style.height = "auto";
+  drawList();
+  if($("#wrap").querySelector("#empty")) $("#wrap").innerHTML = "";
+  $("#wrap").append(bubble("user", txt));
+
+  const holder = bubble("assistant", "");
+  const body = holder.querySelector(".body");
+  body.innerHTML = '<span class="cursor"></span>';
+  $("#wrap").append(holder);
+  $("#log").scrollTop = $("#log").scrollHeight;
+
+  const msgs = [];
+  if(S.sys.trim()) msgs.push({role:"system", content:S.sys});
+  for(const m of (S.ctx ? c.msgs : c.msgs.slice(-1))) msgs.push({role:m.role, content:m.content});
+
+  busy = true; stopped = false;
+  $("#send").textContent = "Durdur"; $("#send").classList.add("stop");
+  let acc = "";
+  const paint = () => {
+    const near = $("#log").scrollHeight - $("#log").scrollTop - $("#log").clientHeight < 120;
+    body.innerHTML = md(acc) + '<span class="cursor"></span>';
+    if(near) $("#log").scrollTop = $("#log").scrollHeight;
+  };
+  try{
+    if(S.prov === "puter"){
+      const resp = await puter.ai.chat(msgs, {model, stream:true, temperature:S.temp});
+      for await (const part of resp){
+        if(stopped) break;
+        const t = part && (part.text || (part.message && part.message.content));
+        if(typeof t === "string" && t){ acc += t; paint(); }
+      }
+    }else{
+      abort = new AbortController();
+      const h = {"Content-Type":"application/json"};
+      if(S.key) h.Authorization = "Bearer " + S.key;
+      const r = await fetch(S.url.replace(/\/+$/,"") + "/chat/completions", {
+        method:"POST", headers:h, signal:abort.signal,
+        body:JSON.stringify({model, messages:msgs, stream:true, temperature:S.temp})
+      });
+      if(!r.ok){ let d=""; try{ d = await r.text(); }catch(e){} throw new Error("HTTP "+r.status+" "+d.slice(0,300)); }
+      for await (const l of lines(r)){
+        const ch = chunkOf(l);
+        if(ch === false) break;
+        if(!ch) continue;
+        acc += ch; paint();
+      }
+    }
+    body.innerHTML = md(acc);
+    if(acc.trim()){ c.msgs.push({role:"assistant", content:acc}); setStat("hazır · "+model,"on"); }
+    else { holder.remove(); showErr("<b>Boş yanıt geldi.</b> Başka bir model dene."); }
+    refreshWho();
+  }catch(e){
+    if(e && e.name === "AbortError" || stopped){
+      body.innerHTML = md(acc || "_(durduruldu)_");
+      if(acc.trim()) c.msgs.push({role:"assistant", content:acc});
+      else holder.remove();
+    }else{
+      holder.remove();
+      const m = esc((e && (e.message || e.error && e.error.message)) || String(e));
+      showErr("<b>İstek başarısız.</b> " + m +
+        "<br>· Model adı bu sağlayıcıda geçerli mi? Listeyi ⟳ ile yenile." +
+        (S.prov === "puter"
+          ? "<br>· Puter ilk kullanımda ücretsiz hesap girişi ister; sol alttaki <b>Giriş</b> ile dene." +
+            "<br>· Dosyayı <code class='inl'>file://</code> ile açtıysan giriş penceresi engellenebilir; " +
+            "<code class='inl'>python -m http.server</code> ile servis et."
+          : "<br>· Sunucu CORS'a izin veriyor mu, anahtar gerekli mi?"));
+      setStat("hata","off");
+    }
+  }finally{
+    busy = false; stopped = false; abort = null;
+    $("#send").textContent = "Gönder"; $("#send").classList.remove("stop");
+    save();
+  }
+}
+
+/* ---------- puter hesabı ---------- */
+async function refreshWho(){
+  if(S.prov !== "puter" || typeof puter === "undefined"){ $("#who").textContent = ""; return; }
+  try{
+    if(puter.auth && puter.auth.isSignedIn && puter.auth.isSignedIn()){
+      const u = await puter.auth.getUser();
+      $("#who").textContent = "@" + (u && (u.username || u.email) || "puter");
+      $("#auth").textContent = "Çıkış";
+    }else{ $("#who").textContent = "giriş yapılmadı"; $("#auth").textContent = "Giriş"; }
+  }catch(e){ $("#who").textContent = ""; }
+}
+
+/* ---------- olaylar ---------- */
+document.addEventListener("click", ev => {
+  const b = ev.target.closest(".cpy");
+  if(!b) return;
+  const code = b.closest(".cb").querySelector("code").textContent;
+  const done = () => { b.textContent = "Kopyalandı"; setTimeout(() => b.textContent = "Kopyala", 1400); };
+  if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(done, () => fb(code, done));
+  else fb(code, done);
+});
+function fb(txt, cb){
+  const t = document.createElement("textarea");
+  t.value = txt; t.style.position = "fixed"; t.style.opacity = "0";
+  document.body.append(t); t.select();
+  try{ document.execCommand("copy"); cb(); }catch(e){}
+  t.remove();
+}
+$("#send").onclick = send;
+$("#in").addEventListener("keydown", e => { if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); send(); } });
+$("#in").addEventListener("input", function(){ this.style.height = "auto"; this.style.height = Math.min(this.scrollHeight,200)+"px"; });
+$("#newBtn").onclick = newChat;
+$("#menu").onclick = () => $("#side").classList.toggle("open");
+$("#gear").onclick = () => $("#opts").classList.toggle("show");
+$("#refresh").onclick = loadModels;
+$("#filter").oninput = fillModels;
+$("#model").onchange = () => { S.model = $("#model").value; save(); };
+$("#prov").onchange = () => {
+  S.prov = $("#prov").value; save();
+  document.body.classList.toggle("custom", S.prov === "custom");
+  if(S.prov === "custom") $("#opts").classList.add("show");
+  loadModels(); refreshWho();
+};
+$("#url").onchange = () => { S.url = $("#url").value.trim(); save(); loadModels(); };
+$("#key").onchange = () => { S.key = $("#key").value; save(); loadModels(); };
+$("#sys").oninput = () => { S.sys = $("#sys").value; save(); };
+$("#ctx").onchange = () => { S.ctx = $("#ctx").checked; save(); };
+$("#temp").oninput = () => { S.temp = +$("#temp").value; $("#tempV").textContent = S.temp.toFixed(2); save(); };
+$("#theme").onclick = () => { S.light = !S.light; document.body.classList.toggle("light", S.light); save(); };
+$("#exp").onclick = () => {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(S.chats,null,2)],{type:"application/json"}));
+  a.download = "sohbetler-"+new Date().toISOString().slice(0,10)+".json";
+  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+};
+$("#auth").onclick = async () => {
+  if(typeof puter === "undefined") return;
+  try{
+    if(puter.auth.isSignedIn && puter.auth.isSignedIn()){ await puter.auth.signOut(); }
+    else { await puter.auth.signIn(); }
+  }catch(e){ showErr("<b>Giriş yapılamadı.</b> "+esc(String(e && e.message || e))); }
+  refreshWho();
+};
+
+/* ---------- açılış ---------- */
+load();
+$("#prov").value = S.prov;
+document.body.classList.toggle("custom", S.prov === "custom");
+$("#sys").value = S.sys; $("#ctx").checked = S.ctx;
+$("#temp").value = S.temp; $("#tempV").textContent = Number(S.temp).toFixed(2);
+$("#url").value = S.url; $("#key").value = S.key;
+document.body.classList.toggle("light", !!S.light);
+if(!S.chats.length) newChat(); else { if(!chat()) S.cur = S.chats[0].id; drawList(); drawLog(); }
+loadModels(); refreshWho();
+</script>
+</body>
+</html>
